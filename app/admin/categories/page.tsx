@@ -1,0 +1,250 @@
+/* ════════════════════════════════════════════════════════════════
+   app/admin/categories/page.tsx  —  Categories Management
+   ──────────────────────────────────────────────────────────────
+   Features:
+   - Category cards grid with product count
+   - Add / Edit / Delete category via inline dialog
+   - Instant update of local state (Supabase insert/update later)
+════════════════════════════════════════════════════════════════ */
+"use client";
+
+import { useState, useMemo } from "react";
+import AdminTopbar            from "@/components/admin/AdminTopbar";
+import { useAdmin }           from "@/context/AdminContext";
+import { getMockCategories }  from "@/lib/admin-mock-data";
+import type { AdminCategory } from "@/lib/admin-types";
+import { Plus, Edit2, Trash2, Tag, X, Save, Package } from "lucide-react";
+
+const INPUT = "w-full px-3 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] bg-white text-sm font-body text-[#3D2B1F] outline-none focus:border-[#C9A028] focus:ring-2 focus:ring-[rgba(201,160,40,0.12)] transition";
+const LABEL = "block text-xs font-semibold text-[#7A5A48] mb-1.5 uppercase tracking-wide";
+
+/** Empty form state for add/edit dialog */
+const EMPTY_CAT = { name: "", description: "", image_url: "" };
+
+/* ══════════════════════════════════════════════════════════════ */
+export default function CategoriesPage() {
+  const { toggleSidebar } = useAdmin();
+
+  /* ── Data state
+   * TODO: Supabase — const { data } = await supabase.from('categories').select('*, products(count)').order('sort_order')
+   */
+  const [categories, setCategories] = useState<AdminCategory[]>(() => getMockCategories());
+
+  /* ── Dialog state ────────────────────────────────────────────── */
+  type DialogMode = "add" | "edit";
+  const [dialog, setDialog] = useState<{ open: boolean; mode: DialogMode; target: AdminCategory | null }>({
+    open: false, mode: "add", target: null,
+  });
+  const [formData, setFormData] = useState(EMPTY_CAT);
+  const [saving,   setSaving]   = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  /** Open add dialog */
+  function openAdd() {
+    setFormData(EMPTY_CAT);
+    setDialog({ open: true, mode: "add", target: null });
+  }
+  /** Open edit dialog pre-filled */
+  function openEdit(cat: AdminCategory) {
+    setFormData({ name: cat.name, description: cat.description ?? "", image_url: cat.image_url ?? "" });
+    setDialog({ open: true, mode: "edit", target: cat });
+  }
+  function closeDialog() { setDialog((d) => ({ ...d, open: false })); }
+
+  /* ── Save handler (add or edit)
+   * TODO: Supabase
+   *   Add:  await supabase.from('categories').insert({ name, slug, description })
+   *   Edit: await supabase.from('categories').update({ name, description }).eq('id', target.id)
+   */
+  async function handleSave() {
+    if (!formData.name.trim()) return;
+    setSaving(true);
+    await new Promise((r) => setTimeout(r, 400));
+
+    if (dialog.mode === "add") {
+      const created: AdminCategory = {
+        id:            Math.max(...categories.map((c) => c.id), 0) + 1,
+        name:          formData.name.trim(),
+        slug:          formData.name.trim().toLowerCase().replace(/\s+/g, "-"),
+        description:   formData.description || null,
+        image_url:     formData.image_url || null,
+        sort_order:    categories.length + 1,
+        product_count: 0,
+      };
+      setCategories((p) => [...p, created]);
+    } else if (dialog.target) {
+      setCategories((p) =>
+        p.map((c) =>
+          c.id === dialog.target!.id
+            ? { ...c, name: formData.name.trim(), description: formData.description || null, image_url: formData.image_url || null }
+            : c
+        )
+      );
+    }
+    setSaving(false);
+    closeDialog();
+  }
+
+  /* ── Delete handler
+   * TODO: Supabase — await supabase.from('categories').delete().eq('id', deleteId)
+   */
+  function handleDelete() {
+    if (deleteId === null) return;
+    setCategories((p) => p.filter((c) => c.id !== deleteId));
+    setDeleteId(null);
+  }
+
+  const totalProducts = useMemo(() => categories.reduce((s, c) => s + c.product_count, 0), [categories]);
+
+  return (
+    <div className="min-h-screen">
+      <AdminTopbar
+        title="Categories"
+        subtitle={`${categories.length} categories · ${totalProducts} total products`}
+        onMenuClick={toggleSidebar}
+        actions={
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C9A028] text-white text-xs font-semibold hover:bg-[#E2B84A] transition shadow"
+          >
+            <Plus size={14} /> New Category
+          </button>
+        }
+      />
+
+      <div className="p-4 md:p-6">
+
+        {/* ── Category grid ─────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((cat) => (
+            <div
+              key={cat.id}
+              className="bg-white rounded-2xl border border-[rgba(61,43,31,0.08)] shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+            >
+              {/* Header row */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#F5EDE4] flex items-center justify-center">
+                    <Tag size={18} className="text-[#C9A028]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#3D2B1F] font-body">{cat.name}</h3>
+                    <p className="text-xs text-[#7A5A48]">/{cat.slug}</p>
+                  </div>
+                </div>
+                {/* Actions — visible on hover */}
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => openEdit(cat)}
+                    className="p-1.5 rounded-lg hover:bg-[#F5EDE4] text-[#7A5A48] hover:text-[#C9A028] transition-colors"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteId(cat.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-[#7A5A48] hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Description */}
+              {cat.description && (
+                <p className="text-xs text-[#7A5A48] mb-3 leading-relaxed">{cat.description}</p>
+              )}
+
+              {/* Footer: product count */}
+              <div className="flex items-center gap-1.5 text-xs text-[#7A5A48] border-t border-[rgba(61,43,31,0.06)] pt-3 mt-3">
+                <Package size={12} />
+                <span>{cat.product_count} products</span>
+                <span className="ml-auto text-[10px] text-[#C8B89A]">sort: {cat.sort_order}</span>
+              </div>
+            </div>
+          ))}
+
+          {/* Add new category card */}
+          <button
+            onClick={openAdd}
+            className="rounded-2xl border-2 border-dashed border-[rgba(201,160,40,0.35)] p-5 flex flex-col items-center justify-center gap-2 text-[#C9A028] hover:bg-amber-50 hover:border-[#C9A028] transition-all duration-200 min-h-[140px]"
+          >
+            <Plus size={24} />
+            <span className="text-sm font-medium">Add Category</span>
+          </button>
+        </div>
+
+      </div>
+
+      {/* ══ Add / Edit Dialog ════════════════════════════════════ */}
+      {dialog.open && (
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          onClick={(e) => e.target === e.currentTarget && closeDialog()}
+        >
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-lg font-semibold text-[#3D2B1F]">
+                {dialog.mode === "add" ? "Add New Category" : "Edit Category"}
+              </h3>
+              <button onClick={closeDialog} className="text-[#7A5A48] hover:text-[#3D2B1F]"><X size={18} /></button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className={LABEL}>Name *</label>
+                <input
+                  type="text"
+                  className={INPUT}
+                  value={formData.name}
+                  onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. Keychains"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className={LABEL}>Description</label>
+                <input
+                  type="text"
+                  className={INPUT}
+                  value={formData.description}
+                  onChange={(e) => setFormData((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Short description"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-5">
+              <button className="flex-1 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] text-sm font-medium hover:bg-[#F5EDE4] transition" onClick={closeDialog}>
+                Cancel
+              </button>
+              <button
+                className="flex-1 py-2 rounded-xl bg-[#C9A028] text-white text-sm font-semibold hover:bg-[#E2B84A] disabled:opacity-60 transition flex items-center justify-center gap-2"
+                onClick={handleSave}
+                disabled={saving || !formData.name.trim()}
+              >
+                <Save size={14} /> {saving ? "Saving…" : dialog.mode === "add" ? "Create" : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Delete Confirmation ══════════════════════════════════ */}
+      {deleteId !== null && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 className="font-display text-lg font-semibold text-[#3D2B1F] mb-2">Delete Category?</h3>
+            <p className="text-sm text-[#7A5A48] mb-5">
+              Products in this category will not be deleted but will become uncategorized.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteId(null)} className="flex-1 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] text-sm font-medium hover:bg-[#F5EDE4] transition">Cancel</button>
+              <button onClick={handleDelete} className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
