@@ -19,6 +19,7 @@ import {
   getOrderStatusColor, formatPKR,
 }                                         from "@/lib/admin-mock-data";
 import type { Order }                     from "@/lib/admin-types";
+import { useTheme }           from "@/context/ThemeContext";
 import {
   ShoppingBag, TrendingUp, Users, Clock,
   Package, MessageCircle, ArrowRight,
@@ -60,6 +61,8 @@ function StatusBadge({ status }: { status: Order["status"] }) {
 }
 
 export default function AdminDashboardPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const metrics     = useMemo(() => getMockDashboardMetrics(), []);
   const allOrders   = useMemo(() => getMockOrders(), []);
   const recentOrders= useMemo(
@@ -81,7 +84,11 @@ export default function AdminDashboardPage() {
       {/* ── Hero Section ──────────────────────────────────────── */}
       <div className="relative rounded-3xl overflow-hidden border border-[rgba(201,160,40,0.2)] min-h-[340px] flex flex-col lg:flex-row">
         {/* Background */}
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 20% 50%, rgba(201,160,40,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 30%, rgba(74,171,171,0.06) 0%, transparent 60%), linear-gradient(135deg, #1C1208 0%, #120A04 100%)" }} />
+        <div className="absolute inset-0" style={{ 
+          background: isDark 
+            ? "radial-gradient(ellipse at 20% 50%, rgba(201,160,40,0.12) 0%, transparent 60%), radial-gradient(ellipse at 80% 30%, rgba(74,171,171,0.08) 0%, transparent 60%), linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-base) 100%)"
+            : "radial-gradient(ellipse at 20% 50%, rgba(201,160,40,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 30%, rgba(74,171,171,0.06) 0%, transparent 60%), linear-gradient(135deg, var(--bg-base) 0%, var(--bg-deep) 100%)"
+        }} />
 
         {/* Left: Copy */}
         <div className="relative z-10 flex flex-col justify-center px-8 py-10 lg:w-1/2">
@@ -89,11 +96,11 @@ export default function AdminDashboardPage() {
             <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-[#C9A028] bg-[rgba(201,160,40,0.1)] px-3 py-1.5 rounded-full border border-[rgba(201,160,40,0.2)] mb-4">
               <Package size={11} /> Croch_et Masterpiece Studio
             </span>
-            <h1 className="font-display text-3xl lg:text-4xl text-[#F2E9DE] leading-tight mb-3">
+            <h1 className="font-display text-3xl lg:text-4xl text-brand-cream leading-tight mb-3">
               Your Crochet Business,<br />
-              <span className="text-[#C9A028]">All in One Place</span>
+              <span className="text-brand-gold">All in One Place</span>
             </h1>
-            <p className="font-body text-sm text-[#C8B89A]/70 leading-relaxed max-w-sm mb-5">
+            <p className="font-body text-sm text-brand-creamDim/70 leading-relaxed max-w-sm mb-5">
               Manage your handcrafted products, track customer orders from Karachi to Lahore,
               and grow your crochet masterpiece — one stitch at a time.
             </p>
@@ -126,15 +133,15 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((m, i) => (
           <StaggerItem key={m.label} index={i}>
-            <div className="relative overflow-hidden rounded-2xl border border-[rgba(201,160,40,0.12)] bg-[rgba(28,18,8,0.8)] p-5 group hover:border-[rgba(201,160,40,0.3)] transition-all duration-300">
+            <div className="relative overflow-hidden rounded-2xl border border-brand-gold/15 bg-brand-base/40 backdrop-blur-sm p-5 group hover:border-brand-gold/40 transition-all duration-300 shadow-sm">
               {/* Gradient accent blob */}
               <div className={`absolute -top-4 -right-4 w-20 h-20 rounded-full opacity-15 blur-xl bg-gradient-to-br ${METRIC_GRADIENT[m.color]}`} />
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-gradient-to-br ${METRIC_GRADIENT[m.color]} text-[#1C1208]`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-gradient-to-br ${METRIC_GRADIENT[m.color]} text-brand-deep`}>
                 {METRIC_ICONS[m.icon]}
               </div>
-              <div className="font-display text-2xl lg:text-3xl font-bold text-[#F2E9DE] mb-0.5">{m.value}</div>
-              <div className="text-xs font-semibold text-[#C8B89A]">{m.label}</div>
-              <div className="text-[10px] text-[#4A3020] mt-0.5">{m.subtext}</div>
+              <div className="font-display text-2xl lg:text-3xl font-bold text-brand-cream mb-0.5">{m.value}</div>
+              <div className="text-xs font-semibold text-brand-creamDim">{m.label}</div>
+              <div className="text-[10px] text-brand-creamDim/50 mt-0.5">{m.subtext}</div>
             </div>
           </StaggerItem>
         ))}
@@ -145,32 +152,32 @@ export default function AdminDashboardPage() {
 
         {/* Recent Orders table (2/3) */}
         <StaggerItem index={4} className="lg:col-span-2">
-          <div className="bg-[rgba(28,18,8,0.8)] border border-[rgba(201,160,40,0.12)] rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(201,160,40,0.1)]">
-              <h3 className="font-display text-base font-semibold text-[#F2E9DE]">Recent Orders</h3>
-              <a href="/admin/orders" className="flex items-center gap-1 text-xs text-[#C9A028] hover:underline">
+          <div className="bg-brand-base/40 backdrop-blur-sm border border-brand-gold/15 rounded-2xl overflow-hidden shadow-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-brand-gold/10">
+              <h3 className="font-display text-base font-semibold text-brand-cream">Recent Orders</h3>
+              <a href="/admin/orders" className="flex items-center gap-1 text-xs text-brand-gold hover:underline">
                 View all <ArrowRight size={11} />
               </a>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[rgba(201,160,40,0.08)]">
+                  <tr className="border-b border-brand-gold/5">
                     {["Customer", "Amount", "Status", "Date"].map(h => (
-                      <th key={h} className="text-left text-[10px] uppercase tracking-widest text-[#4A3020] px-5 py-3">{h}</th>
+                      <th key={h} className="text-left text-[10px] uppercase tracking-widest text-brand-creamDim/40 px-5 py-3">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {recentOrders.map((order, i) => (
-                    <tr key={order.id} className={`border-b border-[rgba(201,160,40,0.06)] hover:bg-[rgba(201,160,40,0.04)] transition-colors ${i === recentOrders.length - 1 ? "border-0" : ""}`}>
+                    <tr key={order.id} className={`border-b border-brand-gold/5 hover:bg-brand-gold/5 transition-colors ${i === recentOrders.length - 1 ? "border-0" : ""}`}>
                       <td className="px-5 py-3">
-                        <div className="font-medium text-[#F2E9DE] text-xs">{order.customer_name}</div>
-                        <div className="text-[10px] text-[#4A3020] font-mono">{order.id}</div>
+                        <div className="font-medium text-brand-cream text-xs">{order.customer_name}</div>
+                        <div className="text-[10px] text-brand-creamDim/40 font-mono">{order.id}</div>
                       </td>
-                      <td className="px-5 py-3 text-[#C9A028] font-semibold text-xs">{formatPKR(order.total_amount)}</td>
+                      <td className="px-5 py-3 text-brand-gold font-semibold text-xs">{formatPKR(order.total_amount)}</td>
                       <td className="px-5 py-3"><StatusBadge status={order.status} /></td>
-                      <td className="px-5 py-3 text-[10px] text-[#7A5A48]">
+                      <td className="px-5 py-3 text-[10px] text-brand-creamDim/50">
                         {new Date(order.created_at).toLocaleDateString("en-PK", { month: "short", day: "numeric" })}
                       </td>
                     </tr>
@@ -183,32 +190,32 @@ export default function AdminDashboardPage() {
 
         {/* WhatsApp Custom Orders (1/3) */}
         <StaggerItem index={5}>
-          <div className="bg-[rgba(28,18,8,0.8)] border border-[rgba(201,160,40,0.12)] rounded-2xl overflow-hidden h-full">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(201,160,40,0.1)]">
+          <div className="bg-brand-base/40 backdrop-blur-sm border border-brand-gold/15 rounded-2xl overflow-hidden h-full shadow-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-brand-gold/10">
               <div className="flex items-center gap-2">
-                <MessageCircle size={15} className="text-green-400" />
-                <h3 className="font-display text-base font-semibold text-[#F2E9DE]">Custom Orders</h3>
+                <MessageCircle size={15} className="text-teal-400" />
+                <h3 className="font-display text-base font-semibold text-brand-cream">Custom Orders</h3>
               </div>
-              <a href="/admin/orders/custom" className="text-xs text-[#C9A028] hover:underline flex items-center gap-1">View all <ArrowRight size={11} /></a>
+              <a href="/admin/orders/custom" className="text-xs text-brand-gold hover:underline flex items-center gap-1">View all <ArrowRight size={11} /></a>
             </div>
             {customOrders.length === 0 ? (
               <div className="p-5 text-center">
-                <MessageCircle size={24} className="text-[#4A3020] mx-auto mb-2" />
-                <p className="text-xs text-[#4A3020]">No WhatsApp custom orders yet</p>
+                <MessageCircle size={24} className="text-brand-creamDim/20 mx-auto mb-2" />
+                <p className="text-xs text-brand-creamDim/40">No WhatsApp custom orders yet</p>
               </div>
             ) : (
-              <div className="divide-y divide-[rgba(201,160,40,0.06)]">
+              <div className="divide-y divide-brand-gold/5">
                 {customOrders.map(order => (
                   <div key={order.id} className="px-5 py-3">
-                    <p className="text-sm font-medium text-[#F2E9DE]">{order.name}</p>
-                    <p className="text-[10px] text-[#7A5A48]">{order.category} · {order.phone}</p>
-                    <span className={`text-[9px] px-2 py-0.5 rounded-full ${order.status === "new" ? "bg-amber-900/30 text-amber-400" : "bg-blue-900/30 text-blue-400"}`}>
+                    <p className="text-sm font-medium text-brand-cream">{order.name}</p>
+                    <p className="text-[10px] text-brand-creamDim/50">{order.category} · {order.phone}</p>
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full ${order.status === "new" ? "bg-amber-900/10 text-amber-500 border border-amber-500/20" : "bg-blue-900/10 text-blue-500 border border-blue-500/20"}`}>
                       {order.status}
                     </span>
                   </div>
                 ))}
               </div>
-            )}
+            ) }
           </div>
         </StaggerItem>
 

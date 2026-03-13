@@ -44,7 +44,14 @@ export const metadata: Metadata = {
   },
 };
 
-/* ── Root Layout ────────────────────────────────────────────────────── */
+import Image from "next/image";
+
+/* ── Context Providers ──────────────────────────────────────
+    ThemeProvider   → Manages light/dark mode
+    AuthProvider    → Manages user session from Supabase auth
+    CartProvider    → Cart items stored in localStorage + Supabase
+    WishlistProvider→ Wishlist synced to Supabase for logged-in users
+──────────────────────────────────────────────────────────── */
 export default function RootLayout({
   children,
 }: {
@@ -56,7 +63,19 @@ export default function RootLayout({
       className={`${cormorant.variable} ${dmSans.variable}`}
       suppressHydrationWarning
     >
-      <body className="bg-brand-base text-brand-cream font-body antialiased">
+      <body className="bg-brand-base text-brand-cream font-body antialiased relative min-h-screen">
+        
+        {/* Global Fixed Background Image */}
+        <div className="fixed inset-0 z-[-1] pointer-events-none bg-brand-base dark:bg-brand-deep transition-colors duration-500">
+          <Image 
+            src="/images/hero-bg-1.jpg" 
+            alt="Handcrafted Crochet Background" 
+            fill 
+            priority
+            quality={60}
+            className="object-cover opacity-[0.07] dark:opacity-[0.04] mix-blend-multiply dark:mix-blend-screen"
+          />
+        </div>
 
         {/* ── Context Providers ──────────────────────────────────────
             ThemeProvider   → Manages light/dark mode

@@ -35,11 +35,11 @@ const VARIANT_STYLES: Record<
     shadow: "0 0 24px rgba(16,44,38,0.5)",
   },
   cream: {
-    color:  "#F7E7CE",
-    bg:     "rgba(247,231,206,0.06)",
-    border: "rgba(247,231,206,0.25)",
-    text:   "#F7E7CE",
-    shadow: "0 0 20px rgba(247,231,206,0.08)",
+    color:  "#C9A028", // Gold for shards
+    bg:     "rgba(61,43,31,0.03)",
+    border: "var(--border)",
+    text:   "var(--cream)",
+    shadow: "none",
   },
   rose: {
     color:  "#c97d7d",

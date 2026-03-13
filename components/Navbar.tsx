@@ -50,16 +50,16 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
           scrolled
-            ? "backdrop-blur-md border-b"
-            : "bg-transparent"
+            ? "backdrop-blur-xl border-b"
+            : "backdrop-blur-sm border-b border-transparent"
         }`}
-        style={scrolled ? {
-          background: "rgba(253,248,243,0.55)",
-          borderColor: "rgba(201,160,40,0.12)",
-          boxShadow: "0 2px 20px rgba(61,43,31,0.06)",
-        } : {}}
+        style={{
+          background: scrolled ? "var(--bg-card)" : "rgba(var(--bg-base-rgb), 0.1)",
+          borderColor: scrolled ? "var(--border)" : "transparent",
+          boxShadow: scrolled ? "0 4px 30px rgba(0,0,0,0.1)" : "none",
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
@@ -67,10 +67,12 @@ export default function Navbar() {
             {/* ── Brand Logo ─────────────────────────────── */}
             <Link
               href="/"
-              className="font-display text-xl md:text-2xl font-semibold text-brand-cream tracking-wide hover:text-brand-gold transition-colors duration-300"
+              className={`font-display text-xl md:text-2xl font-semibold tracking-wide transition-all duration-500 ${
+                scrolled ? "text-brand-cream" : "text-brand-cream"
+              } hover:text-brand-gold`}
             >
               Croch_et
-              <span className="text-brand-gold"> Masterpiece</span>
+              <span className="text-brand-gold animate-pulse-slow"> Masterpiece</span>
             </Link>
 
             {/* ── Desktop Links ──────────────────────────── */}
@@ -165,7 +167,7 @@ export default function Navbar() {
 
       {/* ── Mobile Menu ──────────────────────────────────── */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 pt-16 bg-brand-base/95 backdrop-blur-xl md:hidden animate-fadeIn">
+        <div className="fixed inset-0 z-40 pt-16 bg-brand-base/80 backdrop-blur-2xl md:hidden animate-fadeIn">
           <div className="flex flex-col items-center justify-center h-full gap-8 pb-16">
             {NAV_LINKS.map(link => (
               <Link

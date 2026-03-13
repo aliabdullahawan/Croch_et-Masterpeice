@@ -31,15 +31,15 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | OrderStatus>("all");
   const [selected,     setSelected]     = useState<Order | null>(null);
 
-  /* Adaptive colours */
-  const cardBg    = isDark ? "rgba(28,18,8,0.85)"    : "rgba(255,248,243,0.9)";
-  const cardBorder = isDark ? "rgba(201,160,40,0.1)" : "rgba(61,43,31,0.10)";
-  const textMain  = isDark ? "#F2E9DE"               : "#2C1A0E";
-  const textMuted = isDark ? "#C8B89A"               : "#5C3D2C";
-  const textFaint = isDark ? "#7A5A48"               : "#8A6A58";
-  const inputBg   = isDark ? "rgba(42,22,10,0.8)"    : "rgba(255,255,255,0.9)";
-  const inputBorder = isDark ? "rgba(201,160,40,0.15)" : "rgba(61,43,31,0.15)";
-  const headText  = isDark ? "#F2E9DE"               : "#2C1A0E";
+  /* Adaptive colors from variables */
+  const cardBg    = "var(--bg-base)";
+  const cardBorder = "var(--border)";
+  const textMain  = "var(--cream)";
+  const textMuted = "var(--cream-dim)";
+  const textFaint = "var(--cream-muted)";
+  const inputBg   = "var(--bg-base)";
+  const inputBorder = "var(--border)";
+  const headText  = "var(--cream)";
 
   const STATUS_COLORS: Record<OrderStatus, string> = {
     pending:     "bg-amber-100 text-amber-700 border-amber-300",
@@ -135,10 +135,7 @@ export default function OrdersPage() {
         <div className="space-y-3">
           {active.map((order, i) => (
             <StaggerItem key={order.id} index={i}>
-              <div className="rounded-2xl p-4 transition-all cursor-pointer group"
-                style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(201,160,40,0.3)")}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = cardBorder)}
+              <div className="rounded-2xl p-4 transition-all cursor-pointer group bg-brand-base/40 backdrop-blur-sm border border-brand-gold/15 hover:border-brand-gold/40 shadow-sm"
                 onClick={() => setSelected(order)}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -163,8 +160,7 @@ export default function OrdersPage() {
                       <select value={order.status}
                         onChange={e => { e.stopPropagation(); updateStatus(order.id, e.target.value as OrderStatus); }}
                         onClick={e => e.stopPropagation()}
-                        className="text-[10px] px-2 py-1 rounded-lg outline-none cursor-pointer"
-                        style={{ background: inputBg, border: `1px solid ${inputBorder}`, color: textMuted }}>
+                        className="text-[10px] px-2 py-1 rounded-lg outline-none cursor-pointer border border-brand-gold/15 bg-brand-base/50 text-brand-creamDim">
                         {EDITABLE.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
                       </select>
                       {/* Inline cancel button */}
@@ -191,8 +187,7 @@ export default function OrdersPage() {
       {selected && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
           onClick={e => e.target === e.currentTarget && setSelected(null)}>
-          <div className="rounded-2xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
-            style={{ background: isDark ? "#1C1208" : "#FDF8F3", border: `1px solid ${isDark ? "rgba(201,160,40,0.2)" : "rgba(61,43,31,0.12)"}` }}>
+          <div className="rounded-2xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto bg-brand-base border border-brand-gold/20">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display text-lg" style={{ color: textMain }}>Order Detail</h3>
               <button onClick={() => setSelected(null)} style={{ color: textFaint }}><X size={18}/></button>

@@ -11,18 +11,18 @@ const config: Config = {
       colors: {
         // ── Brand Palette — Logo-Inspired (Warm Feminine) ────────────
         brand: {
-          base:        "#eeddccff",   // warm ivory page background
-          deep:        "#dbd0c3ff",   // slightly deeper cream for sections
-          green:       "#EDE0D8",   // light blush for cards/panels
-          greenLight:  "#F9F0EA",   // hover state for blush
-          cream:       "#ffbc8fff",   // primary text (rich brown)
-          creamDim:    "#ffceb2ff",   // secondary text (warm mid-brown)
-          gold:        "#C9A028",   // gold accent (logo glitter gold)
-          goldLight:   "#E2B84A",   // lighter gold hover
-          rose:        "#f199a3ff",   // blush pink accent
-          roseLight:   "#e2babdff",   // lighter blush pink
-          teal:        "#64b3b3ff",   // teal accent (yarn ball color)
-          tealLight:   "#8ED0D0",   // lighter teal
+          base:        "var(--bg-base)",       // mapped to CSS var
+          deep:        "var(--bg-deep)",       // mapped to CSS var
+          green:       "var(--bg-green)",      // mapped to CSS var
+          greenLight:  "rgba(255, 255, 255, 0.1)", // fallback hover 
+          cream:       "var(--cream)",         // primary text (CSS var)
+          creamDim:    "var(--cream-dim)",     // secondary text (CSS var)
+          gold:        "var(--gold)",          // gold accent (CSS var)
+          goldLight:   "var(--gold-light)",    // lighter gold hover
+          rose:        "var(--rose)",          // blush pink accent (CSS var)
+          roseLight:   "#e2babd",              // static (less used)
+          teal:        "var(--teal)",          // teal accent (CSS var)
+          tealLight:   "#8ED0D0",              // static (less used)
         },
       },
       fontFamily: {

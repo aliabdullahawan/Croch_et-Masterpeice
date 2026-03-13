@@ -9,6 +9,7 @@ import { useState, useRef, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { saveCustomOrder } from "@/lib/order-store";
+import AnimateIn, { AnimateInGroup } from "@/components/ui/AnimateIn";
 import {
   Sparkles,
   MessageCircle,
@@ -161,49 +162,74 @@ Looking forward to hearing from you!`;
   };
 
   return (
-    <div className="pt-28 pb-20 min-h-screen" style={{ background: "var(--bg-base)" }}>
-      <div className="max-w-6xl mx-auto px-6">
+    <div className="relative pt-28 pb-20 min-h-screen">
+      {/* ── Fixed Background Image ── */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 opacity-[0.05] dark:opacity-20 bg-brand-base dark:bg-[#1A0A05] transition-opacity duration-700 mix-blend-overlay dark:mix-blend-normal">
+          <Image 
+            src="/images/hero-bg-1.jpg" 
+            alt="" 
+            fill 
+            className="object-cover scale-[1.05]"
+            priority
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-base via-transparent to-brand-base dark:from-[#1A0A05] dark:to-[#1A0A05] opacity-40" />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-6 z-10">
 
         {/* Page Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex w-14 h-14 rounded-full items-center justify-center mx-auto mb-4" style={{ background: "linear-gradient(135deg, rgba(201,160,40,0.15), rgba(232,160,168,0.15))", border: "2px solid rgba(201,160,40,0.3)" }}>
-            <Sparkles size={26} style={{ color: "var(--gold, #B8900A)" }} />
-          </div>
-          <h1 className="font-display text-5xl mb-3" style={{ color: "var(--cream)" }}>Custom Order</h1>
-          <div className="divider" />
-          <p className="font-body text-base max-w-md mx-auto leading-relaxed" style={{ color: "var(--cream-dim, #5C3D2C)" }}>
-            Fill in the details below and we&apos;ll open WhatsApp so you can finalise your order directly with us.
-          </p>
+          <AnimateIn>
+            <div className="inline-flex w-14 h-14 rounded-full items-center justify-center mx-auto mb-4" style={{ background: "linear-gradient(135deg, rgba(201,160,40,0.15), rgba(232,160,168,0.15))", border: "2px solid rgba(201,160,40,0.3)" }}>
+              <Sparkles size={26} style={{ color: "var(--gold, #B8900A)" }} />
+            </div>
+          </AnimateIn>
+          <AnimateIn delay={0.1}>
+            <h1 className="font-display text-5xl mb-3 text-brand-cream">Custom Order</h1>
+          </AnimateIn>
+          <AnimateIn delay={0.15}>
+            <div className="divider" />
+          </AnimateIn>
+          <AnimateIn delay={0.2}>
+            <p className="font-body text-base max-w-md mx-auto leading-relaxed text-brand-creamDim">
+              Fill in the details below and we&apos;ll open WhatsApp so you can finalise your order directly with us.
+            </p>
+          </AnimateIn>
         </div>
 
         {submitted ? (
           /* ── Success State ── */
-          <div className="glass-card p-12 text-center max-w-lg mx-auto">
-            <div className="w-14 h-14 rounded-full bg-brand-gold/20 flex items-center justify-center mx-auto mb-5">
-              <Check size={28} className="text-brand-gold" />
-            </div>
-            <h2 className="font-display text-3xl text-brand-cream mb-3">WhatsApp Opened!</h2>
-            <p className="font-body text-sm text-brand-creamDim/60 mb-2 max-w-sm mx-auto">
-              Your order details have been pre-filled in WhatsApp. Send the message to Amna to get started!
-            </p>
-            {imageNames.length > 0 && (
-              <p className="font-body text-sm text-brand-gold/80 mb-6 max-w-sm mx-auto">
-                📎 Don&apos;t forget to attach your {imageNames.length} reference image{imageNames.length > 1 ? "s" : ""} in the WhatsApp chat!
+          <AnimateIn>
+            <div className="glass-card p-12 text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-full bg-brand-gold/20 flex items-center justify-center mx-auto mb-5">
+                <Check size={28} className="text-brand-gold" />
+              </div>
+              <h2 className="font-display text-3xl text-brand-cream mb-3">WhatsApp Opened!</h2>
+              <p className="font-body text-sm text-brand-creamDim/60 mb-2 max-w-sm mx-auto">
+                Your order details have been pre-filled in WhatsApp. Send the message to Amna to get started!
               </p>
-            )}
-            <div className="flex gap-3 justify-center flex-wrap">
-              <button onClick={() => { setSubmitted(false); setImages([]); setImageNames([]); setForm(INITIAL); }} className="btn-outline text-sm">
-                Submit Another Order
-              </button>
-              <Link href="/products" className="btn-gold text-sm inline-flex items-center gap-2">
-                Browse Shop <ArrowRight size={14} />
-              </Link>
+              {imageNames.length > 0 && (
+                <p className="font-body text-sm text-brand-gold/80 mb-6 max-w-sm mx-auto">
+                  📎 Don&apos;t forget to attach your {imageNames.length} reference image{imageNames.length > 1 ? "s" : ""} in the WhatsApp chat!
+                </p>
+              )}
+              <div className="flex gap-3 justify-center flex-wrap">
+                <button onClick={() => { setSubmitted(false); setImages([]); setImageNames([]); setForm(INITIAL); }} className="btn-outline text-sm">
+                  Submit Another Order
+                </button>
+                <Link href="/products" className="btn-gold text-sm inline-flex items-center gap-2">
+                  Browse Shop <ArrowRight size={14} />
+                </Link>
+              </div>
             </div>
-          </div>
+          </AnimateIn>
         ) : (
           /* ── Two-Column Form Layout ── */
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <AnimateIn delay={0.3}>
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
               {/* ── LEFT: Form (2/3 width) ── */}
               <div className="lg:col-span-2 space-y-6">
@@ -400,9 +426,10 @@ Looking forward to hearing from you!`;
                     ))}
                   </ul>
                 </div>
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </AnimateIn>
         )}
 
       </div>

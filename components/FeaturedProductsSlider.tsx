@@ -1,262 +1,152 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Heart, ShoppingCart } from "lucide-react";
-
-const products = [
-  {
-    id: "prod-001",
-    name: "Handcrafted Sweater",
-    category: "Sweaters",
-    description: "Beautiful ladies sweater in rich cream yarn, fully customisable.",
-    price: 2500,
-    image: "https://i.pinimg.com/736x/e7/cf/cb/e7cfcbd7a8af10b8839c8d9a3d8eb4ce.jpg",
-    badge: null,
-  },
-  {
-    id: "prod-002",
-    name: "Crochet Tote Bag",
-    category: "Bags",
-    description: "Spacious handwoven bag perfect for everyday use.",
-    price: 1800,
-    image: "https://i.pinimg.com/736x/9c/f2/8b/9cf28b4df4e06e0ca34fbe87f25734b6.jpg",
-    badge: null,
-  },
-  {
-    id: "prod-003",
-    name: "Baby Blanket Set",
-    category: "Baby",
-    description: "Soft pastel crochet blankets with matching accessories for newborns.",
-    price: 1500,
-    image: "https://i.pinimg.com/736x/f4/b0/00/f4b000a6880f7e8d0c677812d789e001.jpg",
-    badge: "Baby",
-  },
-  {
-    id: "prod-004",
-    name: "Crochet Earrings",
-    category: "Accessories",
-    description: "Delicate handcrafted earrings in various vibrant colors.",
-    price: 450,
-    image: "https://i.pinimg.com/1200x/ae/cf/d7/aecfd72b2439914647ec06d19cb182b5.jpg",
-    badge: null,
-  },
-  {
-    id: "prod-005",
-    name: "Quran Pak Cover",
-    category: "Special",
-    description: "Beautifully crafted cover for Quran Pak made with respect and care.",
-    price: 1200,
-    image: "https://i.pinimg.com/736x/5d/f7/69/5df7696c4f24b7961c8c72748a355ff8.jpg",
-    badge: "Special",
-  },
-  {
-    id: "prod-006",
-    name: "Crochet Bouquet",
-    category: "Decor",
-    description: "Everlasting handcrafted flower bouquet. The best gift that never wilts.",
-    price: 2000,
-    image: "https://i.pinimg.com/736x/e7/cf/cb/e7cfcbd7a8af10b8839c8d9a3d8eb4ce.jpg",
-    badge: "Decor",
-  },
-];
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { useWishlist } from "@/context/WishlistContext";
+import AnimateIn, { AnimateInGroup } from "@/components/ui/AnimateIn";
+import { MOCK_PRODUCTS } from "@/data/products";
 
 export default function FeaturedProductsSlider() {
-  const [active, setActive] = useState(2);
-  const [paused, setPaused] = useState(false);
+  const products = MOCK_PRODUCTS.filter(p => p.is_featured);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { toggle, isInList } = useWishlist();
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isHovering, setIsHovering] = useState(false);
 
-  const next = useCallback(() => setActive(i => (i + 1) % products.length), []);
-  const prev = useCallback(() => setActive(i => (i - 1 + products.length) % products.length), []);
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 5);
+    }
+  };
 
   useEffect(() => {
-    if (paused) return;
-    const t = setInterval(next, 4000);
-    return () => clearInterval(t);
-  }, [next, paused]);
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, []);
 
-  const getPos = (idx: number) => {
-    const total = products.length;
-    let diff = idx - active;
-    if (diff > total / 2) diff -= total;
-    if (diff < -total / 2) diff += total;
-    return diff;
+  // Auto-scroll logic for circular-like feel
+  useEffect(() => {
+    if (isHovering || products.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      if (scrollContainerRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+        const reachedEnd = Math.ceil(scrollLeft + clientWidth) >= scrollWidth - 20;
+        
+        if (reachedEnd) {
+          // Wrap around seamlessly-ish by scrolling back to 0
+          scrollContainerRef.current.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          // Use a fixed width or scroll by a percentage. 300px roughly matches item width + gap.
+          scrollContainerRef.current.scrollBy({ left: 320, behavior: "smooth" });
+        }
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isHovering, products.length]);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const { clientWidth } = scrollContainerRef.current;
+      const scrollAmount = direction === "left" ? -clientWidth / 1.5 : clientWidth / 1.5;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
   };
 
   return (
-    <div
-      className="relative w-full"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+    <div 
+      className="relative w-full max-w-[1400px] mx-auto group"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+      onTouchStart={() => setIsHovering(true)}
+      onTouchEnd={() => setIsHovering(false)}
     >
-      {/* Slider stage */}
-      <div className="relative h-[400px] flex items-center justify-center overflow-hidden" style={{ perspective: "1400px" }}>
-        {products.map((p, idx) => {
-          const pos = getPos(idx);
-          const absPos = Math.abs(pos);
-
-          if (absPos > 2) return null;
-
-          const isCenter = pos === 0;
-          const x = pos * 260;
-          const scale = isCenter ? 1 : absPos === 1 ? 0.78 : 0.62;
-          const z = isCenter ? 0 : absPos === 1 ? -60 : -140;
-          const opacity = isCenter ? 1 : absPos === 1 ? 0.7 : 0.4;
-
-          return (
-            <div
-              key={p.id}
-              onClick={() => !isCenter && setActive(idx)}
-              className="absolute cursor-pointer select-none"
-              style={{
-                transform: `translateX(${x}px) translateZ(${z}px) scale(${scale})`,
-                opacity,
-                transition: "all 0.5s cubic-bezier(0.4,0,0.2,1)",
-                zIndex: isCenter ? 10 : absPos === 1 ? 5 : 1,
-                width: "220px",
-              }}
-            >
-              <div
-                className="rounded-2xl overflow-hidden flex flex-col"
-                style={{
-                  background: "linear-gradient(180deg, #181c15 0%, #0f1208 100%)",
-                  border: isCenter
-                    ? "1.5px solid rgba(195,152,72,0.35)"
-                    : "1px solid rgba(255,255,255,0.05)",
-                  boxShadow: isCenter
-                    ? "0 30px 70px rgba(0,0,0,0.55)"
-                    : "0 10px 28px rgba(0,0,0,0.3)",
-                }}
-              >
-                {/* Image */}
-                <div className="relative h-[200px] overflow-hidden">
-                  <Image
-                    src={p.image}
-                    alt={p.name}
-                    fill
-                    className="object-cover"
-                    style={{ transition: "transform 0.5s ease" }}
+      {/* ── Scroll Container ── */}
+      <div 
+        ref={scrollContainerRef}
+        onScroll={checkScroll}
+        className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-4 pb-8 pt-4"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {products.map((p) => (
+          <div key={p.id} className="min-w-[260px] md:min-w-[300px] snap-center shrink-0">
+            <Link href={`/products/${p.slug}`} className="group/card block w-full relative">
+              {/* Image Container */}
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-[#FDF8F5] transition-all duration-500 group-hover/card:shadow-[0_20px_40px_-15px_rgba(201,160,40,0.15)] mb-4">
+                <Image
+                  src={p.images?.[0] ?? "/placeholder-product.jpg"}
+                  alt={p.name}
+                  fill
+                  className="object-cover transition-transform duration-700 ease-out group-hover/card:scale-110"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+                <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover/card:bg-black/5" />
+                
+                {/* Heart Button */}
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(p); }}
+                  className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-md transition-transform duration-300 hover:scale-110 active:scale-95"
+                  aria-label="Toggle Wishlist"
+                >
+                  <Heart 
+                    size={16} 
+                    className={`transition-colors duration-300 ${isInList(p.id) ? "fill-[#D0707A] text-[#D0707A]" : "text-[#8A6A58] hover:text-[#D0707A]"}`} 
                   />
-                  {isCenter && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  )}
-                  {p.badge && isCenter && (
-                    <div
-                      className="absolute top-3 left-3 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
-                      style={{ background: "rgba(195,152,72,0.9)", color: "#0f1208" }}
-                    >
-                      {p.badge}
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-4 flex flex-col gap-2">
-                  <p className="font-body text-[10px] uppercase tracking-widest" style={{ color: "#c39448" }}>
-                    {p.category}
-                  </p>
-                  <p className="font-display text-sm leading-tight" style={{ color: "#F7E7CE" }}>
-                    {p.name}
-                  </p>
-                  {isCenter && (
-                    <p className="font-body text-xs leading-relaxed" style={{ color: "#b8a888", opacity: 0.8 }}>
-                      {p.description}
-                    </p>
-                  )}
-                  <p className="font-display text-base" style={{ color: "#c39448" }}>
-                    Rs. {p.price.toLocaleString()}
-                  </p>
-                  {isCenter && (
-                    <div className="flex gap-2 mt-1">
-                      <button
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-body transition-all duration-200 hover:scale-105"
-                        style={{
-                          border: "1px solid rgba(195,152,72,0.4)",
-                          color: "#c39448",
-                          background: "rgba(195,152,72,0.08)",
-                        }}
-                      >
-                        <Heart size={13} /> Wishlist
-                      </button>
-                      <button
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-body transition-all duration-200 hover:scale-105"
-                        style={{
-                          background: "linear-gradient(135deg, #c39448, #a87835)",
-                          color: "#0f1208",
-                          fontWeight: 600,
-                        }}
-                      >
-                        <ShoppingCart size={13} /> Add to Cart
-                      </button>
-                    </div>
-                  )}
-                </div>
+                </button>
               </div>
-            </div>
-          );
-        })}
+
+              {/* Details */}
+              <div className="px-1 text-center flex flex-col items-center">
+                <h3 className="font-display text-lg text-[#1A0A05] transition-colors duration-300 group-hover/card:text-[#C9A028]">
+                  {p.name}
+                </h3>
+                <p className="font-body text-[13px] tracking-widest text-[#8A6A58] mt-1 uppercase" style={{ fontWeight: 500 }}>
+                  {p.price ? `PKR ${p.price.toLocaleString()}` : "Price on request"}
+                </p>
+              </div>
+            </Link>
+          </div>
+        ))}
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center justify-center gap-5 mt-6">
-        <button
-          onClick={prev}
-          className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-          style={{
-            border: "1px solid rgba(195,152,72,0.3)",
-            background: "rgba(195,152,72,0.07)",
-            color: "#c39448",
-          }}
-          aria-label="Previous product"
-        >
-          <ChevronLeft size={18} />
-        </button>
+      {/* ── Navigation Buttons ── */}
+      <button
+        onClick={() => scroll("left")}
+        disabled={!canScrollLeft}
+        className={`absolute left-0 top-[40%] -translate-y-1/2 -translate-x-2 md:-translate-x-6 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#1A0A05] shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-0 disabled:scale-90`}
+      >
+        <ChevronLeft size={20} />
+      </button>
 
-        <div className="flex gap-2">
-          {products.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActive(i)}
-              style={{
-                width: i === active ? "24px" : "8px",
-                height: "8px",
-                borderRadius: "999px",
-                background: i === active ? "#c39448" : "rgba(195,152,72,0.22)",
-                transition: "all 0.3s ease",
-              }}
-              aria-label={`Go to product ${i + 1}`}
-            />
-          ))}
-        </div>
+      <button
+        onClick={() => scroll("right")}
+        disabled={!canScrollRight}
+        className={`absolute right-0 top-[40%] -translate-y-1/2 translate-x-2 md:translate-x-6 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#1A0A05] shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-0 disabled:scale-90`}
+      >
+        <ChevronRight size={20} />
+      </button>
 
-        <button
-          onClick={next}
-          className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-          style={{
-            border: "1px solid rgba(195,152,72,0.3)",
-            background: "rgba(195,152,72,0.07)",
-            color: "#c39448",
-          }}
-          aria-label="Next product"
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
-
-      {/* View all */}
-      <div className="text-center mt-8">
+      {/* View All */}
+      <AnimateIn delay={0.3} className="text-center mt-6">
         <Link
           href="/products"
-          className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-body text-sm font-medium transition-all duration-200 hover:scale-105"
+          className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-body text-[13px] font-bold uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-lg"
           style={{
-            border: "1.5px solid rgba(195,152,72,0.5)",
-            color: "#c39448",
-            background: "rgba(195,152,72,0.06)",
+            border: "1px solid rgba(201,160,40,0.3)",
+            color: "#C9A028",
+            background: "transparent",
           }}
         >
-          View All Products →
+          View All Products
         </Link>
-      </div>
+      </AnimateIn>
     </div>
   );
 }

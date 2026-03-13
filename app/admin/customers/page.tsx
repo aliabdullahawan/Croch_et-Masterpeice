@@ -68,16 +68,16 @@ export default function CustomersPage() {
             placeholder="Search customers…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] bg-white text-sm font-body text-[#3D2B1F] w-full outline-none focus:border-[#C9A028] transition"
+            className="pl-9 pr-4 py-2 rounded-xl border border-brand-cream/15 bg-brand-base/50 text-sm font-body text-brand-cream w-full outline-none focus:border-brand-gold transition"
           />
         </div>
 
         {/* ── Table ────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-[rgba(61,43,31,0.08)] shadow-sm overflow-hidden">
+        <div className="bg-brand-base/40 backdrop-blur-sm rounded-2xl border border-brand-gold/15 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm font-body">
               <thead>
-                <tr className="bg-[#F9F5F0] text-[#7A5A48] font-medium text-xs border-b border-[rgba(61,43,31,0.08)]">
+                <tr className="bg-brand-gold/10 text-brand-creamDim font-medium text-xs border-b border-brand-gold/15">
                   <th className="px-5 py-3 text-left">Customer</th>
                   <th className="px-5 py-3 text-left">Contact</th>
                   <th className="px-5 py-3 text-right">Orders</th>
@@ -90,32 +90,32 @@ export default function CustomersPage() {
                 {filtered.map((c) => (
                   <tr
                     key={c.id}
-                    className="hover:bg-[#F9F5F0] transition-colors cursor-pointer"
+                    className="hover:bg-brand-gold/5 transition-colors cursor-pointer"
                     onClick={() => setSelected(c)}
                   >
                     {/* Avatar + name */}
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-[#EDE0D8] flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
                           {c.avatar_url
                             ? <img src={c.avatar_url} alt={c.full_name ?? ""} className="w-full h-full rounded-full object-cover" />
-                            : <User size={14} className="text-[#7A5A48]" />
+                            : <User size={14} className="text-brand-gold" />
                           }
                         </div>
                         <div>
-                          <div className="font-medium text-[#3D2B1F]">{c.full_name ?? "Anonymous"}</div>
-                          <div className="text-[10px] text-[#7A5A48]">{c.email ?? "No email"}</div>
+                          <div className="font-medium text-brand-cream">{c.full_name ?? "Anonymous"}</div>
+                          <div className="text-[10px] text-brand-creamDim">{c.email ?? "No email"}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-3 text-[#7A5A48] text-xs">{c.phone ?? "—"}</td>
                     <td className="px-5 py-3 text-right">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5EDE4] text-[#3D2B1F] text-xs font-bold">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-gold/20 text-brand-gold text-xs font-bold">
                         {c.order_count}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right font-semibold text-[#3D2B1F]">
-                      {c.total_spent > 0 ? formatPKR(c.total_spent) : <span className="text-[#7A5A48] font-normal">₨0</span>}
+                    <td className="px-5 py-3 text-right font-semibold text-brand-cream">
+                      {c.total_spent > 0 ? formatPKR(c.total_spent) : <span className="text-brand-creamDim font-normal">₨0</span>}
                     </td>
                     <td className="px-5 py-3 text-[#7A5A48] text-xs">
                       {c.last_order_at ? new Date(c.last_order_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }) : "—"}
@@ -149,19 +149,19 @@ export default function CustomersPage() {
           className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
           onClick={(e) => e.target === e.currentTarget && setSelected(null)}
         >
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-brand-base rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border border-brand-gold/20">
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#EDE0D8] flex items-center justify-center">
-                  <User size={20} className="text-[#7A5A48]" />
+                <div className="w-12 h-12 rounded-full bg-brand-gold/10 flex items-center justify-center">
+                  <User size={20} className="text-brand-gold" />
                 </div>
                 <div>
-                  <h3 className="font-display text-lg font-semibold text-[#3D2B1F]">{selected.full_name ?? "Anonymous"}</h3>
-                  <p className="text-xs text-[#7A5A48]">{selected.email}</p>
+                  <h3 className="font-display text-lg font-semibold text-brand-cream">{selected.full_name ?? "Anonymous"}</h3>
+                  <p className="text-xs text-brand-creamDim">{selected.email}</p>
                 </div>
               </div>
-              <button onClick={() => setSelected(null)} className="text-[#7A5A48] hover:text-[#3D2B1F]">
+              <button onClick={() => setSelected(null)} className="text-brand-creamDim hover:text-brand-cream">
                 <X size={18} />
               </button>
             </div>
@@ -173,9 +173,9 @@ export default function CustomersPage() {
                 { label: "Total Spent",value: formatPKR(selected.total_spent) },
                 { label: "Member",     value: new Date(selected.created_at).toLocaleDateString("en-PK", { month: "short", year: "numeric" }) },
               ].map((s) => (
-                <div key={s.label} className="bg-[#F9F5F0] rounded-xl p-3 text-center">
-                  <div className="font-bold text-[#3D2B1F] text-sm">{s.value}</div>
-                  <div className="text-[10px] text-[#7A5A48] mt-0.5">{s.label}</div>
+                <div key={s.label} className="bg-brand-gold/10 rounded-xl p-3 text-center border border-brand-gold/10">
+                  <div className="font-bold text-brand-cream text-sm">{s.value}</div>
+                  <div className="text-[10px] text-brand-creamDim mt-0.5">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -193,10 +193,10 @@ export default function CustomersPage() {
               ) : (
                 <div className="space-y-2">
                   {customerOrders.map((o) => (
-                    <div key={o.id} className="flex items-center justify-between bg-[#F9F5F0] rounded-xl px-4 py-2.5 text-sm">
+                    <div key={o.id} className="flex items-center justify-between bg-brand-gold/5 rounded-xl px-4 py-2.5 text-sm border border-brand-gold/5">
                       <div>
-                        <div className="font-mono text-[10px] text-[#7A5A48]">{o.id}</div>
-                        <div className="text-xs text-[#3D2B1F] mt-0.5">{new Date(o.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</div>
+                        <div className="font-mono text-[10px] text-brand-creamDim/50">{o.id}</div>
+                        <div className="text-xs text-brand-cream mt-0.5">{new Date(o.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</div>
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-[#3D2B1F] text-xs">{formatPKR(o.total_amount)}</div>

@@ -1,11 +1,6 @@
 {
   "/page": "app/page.js",
-  "/products/page": "app/products/page.js",
-  "/products/[id]/page": "app/products/[id]/page.js",
-  "/admin/analytics/page": "app/admin/analytics/page.js",
-  "/admin/orders/cancelled/page": "app/admin/orders/cancelled/page.js",
-  "/admin/orders/custom/page": "app/admin/orders/custom/page.js",
-  "/admin/orders/page": "app/admin/orders/page.js",
-  "/admin/customers/page": "app/admin/customers/page.js",
-  "/admin/profile/page": "app/admin/profile/page.js"
+  "/admin/products/new/page": "app/admin/products/new/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/products/page": "app/admin/products/page.js"
 }

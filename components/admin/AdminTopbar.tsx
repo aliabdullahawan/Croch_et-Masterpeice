@@ -18,12 +18,12 @@ export default function AdminTopbar({ title, subtitle, onMenuClick, actions }: A
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const bg         = isDark ? "rgba(28,18,8,0.92)"   : "rgba(253,248,243,0.97)";
-  const border     = isDark ? "rgba(201,160,40,0.12)" : "rgba(61,43,31,0.10)";
-  const textMain   = isDark ? "#F2E9DE"               : "#3D2B1F";
-  const textMuted  = isDark ? "#7A5A48"               : "#7A5A48";
-  const hoverBg    = isDark ? "rgba(201,160,40,0.1)"  : "#F5EDE4";
-  const iconBg     = isDark ? "rgba(201,160,40,0.15)" : "#EDE0D8";
+  const bg         = "var(--bg-base)";
+  const border     = "var(--border)";
+  const textMain   = "var(--cream)";
+  const textMuted  = "var(--cream-dim)";
+  const hoverBg    = "rgba(201,160,40,0.1)";
+  const iconBg     = "rgba(201,160,40,0.15)";
 
   return (
     <header

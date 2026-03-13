@@ -7,8 +7,9 @@
 import { useState, useEffect, useRef } from "react";
 import Link                             from "next/link";
 import { useRouter }                    from "next/navigation";
-import { Eye, EyeOff, LogIn, Chrome }   from "lucide-react";
+import { Eye, EyeOff, LogIn }           from "lucide-react";
 import { useAuth }                      from "@/context/AuthContext";
+import { motion }                       from "framer-motion";
 
 function useTypewriter(texts: string[], speed = 80, pause = 2000) {
   const [display,  setDisplay]  = useState("");
@@ -90,6 +91,15 @@ export default function LoginPage() {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.1 } }
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
+  };
+
   return (
     <div className="min-h-screen flex">
 
@@ -97,7 +107,12 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-col justify-center items-center flex-1 bg-brand-deep relative overflow-hidden px-16">
         <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-brand-gold/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-brand-rose/10 rounded-full blur-3xl" />
-        <div className="relative z-10 text-center max-w-sm">
+        <motion.div 
+          className="relative z-10 text-center max-w-sm"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
           <div className="w-16 h-16 rounded-full border border-brand-gold/30 flex items-center justify-center mx-auto mb-8">
             <span className="text-2xl">🧶</span>
           </div>
@@ -105,42 +120,47 @@ export default function LoginPage() {
           <p className="font-body text-sm text-brand-gold min-h-[24px]">
             {tagline}<span className="animate-pulse">|</span>
           </p>
-        </div>
+        </motion.div>
       </div>
 
       {/* ── Right: form panel ── */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-16 bg-brand-base">
-        <div className="w-full max-w-md">
+        <motion.div 
+          className="w-full max-w-md"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
 
-          <Link href="/" className="block text-center mb-10">
-            <p className="font-display text-2xl text-brand-cream">
-              Croch_et <span className="text-brand-gold">Masterpiece</span>
-            </p>
-          </Link>
+          <motion.div variants={itemVariants}>
+            <Link href="/" className="block text-center mb-10">
+              <p className="font-display text-2xl text-brand-cream">
+                Croch_et <span className="text-brand-gold">Masterpiece</span>
+              </p>
+            </Link>
+          </motion.div>
 
-          <h1 className="font-display text-3xl text-brand-cream mb-1">Sign In</h1>
-          <p className="font-body text-sm text-brand-creamDim/60 mb-8">
+          <motion.h1 variants={itemVariants} className="font-display text-3xl text-brand-cream mb-1">Sign In</motion.h1>
+          <motion.p variants={itemVariants} className="font-body text-sm text-brand-creamDim/60 mb-8">
             Don't have an account?{" "}
             <Link href="/auth/signup" className="text-brand-gold hover:underline">Create one</Link>
-          </p>
+          </motion.p>
 
           {error && (
-            <div className="bg-brand-rose/10 border border-brand-rose/30 text-brand-rose text-sm font-body px-4 py-3 rounded-xl mb-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-brand-rose/10 border border-brand-rose/30 text-brand-rose text-sm font-body px-4 py-3 rounded-xl mb-6">
               {error}
-            </div>
+            </motion.div>
           )}
 
           {/* Google Login */}
-          <button
+          <motion.button
+            variants={itemVariants}
             type="button"
             onClick={handleGoogle}
             disabled={googleLoad}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-brand-cream/15 bg-white/5 hover:bg-white/10 hover:border-brand-cream/30 text-brand-cream font-body text-sm transition-all duration-300 mb-4 disabled:opacity-60 active:scale-95"
-            style={{ transform: "scale(1)", transition: "transform 0.15s cubic-bezier(0.34,1.56,0.64,1), background 0.3s ease, border-color 0.3s ease" }}
-            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.02)")}
-            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
-            onMouseDown={e => (e.currentTarget.style.transform = "scale(0.97)")}
-            onMouseUp={e => (e.currentTarget.style.transform = "scale(1.02)")}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-brand-cream/15 bg-white/5 hover:bg-white/10 hover:border-brand-cream/30 text-brand-cream font-body text-sm transition-colors mb-4 disabled:opacity-60"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
           >
             {googleLoad ? (
               <span className="w-4 h-4 border-2 border-brand-cream/30 border-t-brand-cream rounded-full animate-spin" />
@@ -153,37 +173,37 @@ export default function LoginPage() {
               </svg>
             )}
             Continue with Google
-          </button>
+          </motion.button>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 mb-4">
+          <motion.div variants={itemVariants} className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-brand-cream/10" />
             <span className="font-body text-xs text-brand-creamDim/40">or sign in with email</span>
             <div className="flex-1 h-px bg-brand-cream/10" />
-          </div>
+          </motion.div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
+            <motion.div variants={itemVariants}>
               <label className="block font-body text-xs text-brand-creamDim/60 mb-1.5">Email Address</label>
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com" className="input-dark" autoComplete="email" />
-            </div>
+            </motion.div>
 
-            <div>
+            <motion.div variants={itemVariants}>
               <label className="block font-body text-xs text-brand-creamDim/60 mb-1.5">Password</label>
               <div className="relative">
                 <input type={showPw ? "text" : "password"} required value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Your password" className="input-dark pr-10" autoComplete="current-password" />
                 <button type="button" onClick={() => setShowPw(s => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-creamDim/40 hover:text-brand-creamDim transition-colors">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-creamDim/40 hover:text-brand-cream transition-colors">
                   {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Remember Me + Forgot Password */}
-            <div className="flex items-center justify-between">
+            <motion.div variants={itemVariants} className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <div className="relative">
                   <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)}
@@ -199,24 +219,24 @@ export default function LoginPage() {
               <Link href="/auth/forgot-password" className="font-body text-xs text-brand-creamDim/40 hover:text-brand-gold transition-colors">
                 Forgot password?
               </Link>
-            </div>
+            </motion.div>
 
-            <button type="submit" disabled={loading}
-              className="btn-gold w-full flex items-center justify-center gap-2 py-3.5 disabled:opacity-70 transition-transform active:scale-95"
-              style={{ transition: "transform 0.15s cubic-bezier(0.34,1.56,0.64,1)" }}
-              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.02) translateY(-1px)")}
-              onMouseLeave={e => (e.currentTarget.style.transform = "scale(1) translateY(0)")}
-              onMouseDown={e => (e.currentTarget.style.transform = "scale(0.97)")}
-              onMouseUp={e => (e.currentTarget.style.transform = "scale(1.02)")}
+            <motion.button 
+              variants={itemVariants}
+              type="submit" 
+              disabled={loading}
+              className="btn-gold w-full flex items-center justify-center gap-2 py-3.5 disabled:opacity-70"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
             >
               {loading ? <span className="w-4 h-4 border-2 border-brand-base/40 border-t-brand-base rounded-full animate-spin" /> : <><LogIn size={16} /> Sign In</>}
-            </button>
+            </motion.button>
           </form>
 
-          <p className="font-body text-[11px] text-brand-creamDim/30 text-center mt-8">
+          <motion.p variants={itemVariants} className="font-body text-[11px] text-brand-creamDim/30 text-center mt-8">
             By signing in you agree to our terms. Your data is handled securely.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
       </div>
     </div>
   );

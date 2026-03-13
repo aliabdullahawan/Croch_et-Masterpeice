@@ -94,7 +94,7 @@ export default function ProductsPage() {
               placeholder="Search by name or SKU…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] bg-white text-sm font-body text-[#3D2B1F] w-full outline-none focus:border-[#C9A028] focus:ring-2 focus:ring-[rgba(201,160,40,0.15)] transition"
+              className="pl-9 pr-4 py-2 rounded-xl border border-brand-cream/15 bg-brand-base/50 text-sm font-body text-brand-cream w-full outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/15 transition"
             />
           </div>
 
@@ -102,7 +102,7 @@ export default function ProductsPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
-            className="px-3 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] bg-white text-sm font-body text-[#3D2B1F] outline-none focus:border-[#C9A028] transition"
+            className="px-3 py-2 rounded-xl border border-brand-cream/15 bg-brand-base/50 text-sm font-body text-brand-cream outline-none focus:border-brand-gold transition"
           >
             <option value="all">All Categories</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -112,7 +112,7 @@ export default function ProductsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="px-3 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] bg-white text-sm font-body text-[#3D2B1F] outline-none focus:border-[#C9A028] transition"
+            className="px-3 py-2 rounded-xl border border-brand-cream/15 bg-brand-base/50 text-sm font-body text-brand-cream outline-none focus:border-brand-gold transition"
           >
             <option value="all">All Status</option>
             <option value="available">Available</option>
@@ -131,14 +131,14 @@ export default function ProductsPage() {
         )}
 
         {/* ── Products table ──────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-[rgba(61,43,31,0.08)] shadow-sm overflow-hidden">
+        <div className="bg-brand-base/40 backdrop-blur-sm rounded-2xl border border-brand-gold/15 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm font-body">
               <thead>
-                <tr className="bg-[#F9F5F0] text-[#7A5A48] font-medium text-xs border-b border-[rgba(61,43,31,0.08)]">
+                <tr className="bg-brand-gold/10 text-brand-creamDim font-medium text-xs border-b border-brand-gold/15">
                   <th className="px-4 py-3 text-left w-10">
                     {/* Select-all checkbox */}
-                    <button onClick={toggleAll} className="text-[#7A5A48] hover:text-[#C9A028]">
+                    <button onClick={toggleAll} className="text-brand-creamDim hover:text-brand-gold">
                       {selected.size === filtered.length && filtered.length > 0
                         ? <CheckSquare size={16} />
                         : <Square size={16} />}
@@ -163,25 +163,25 @@ export default function ProductsPage() {
                   return (
                     <tr
                       key={product.id}
-                      className={`hover:bg-[#F9F5F0] transition-colors ${isSelected ? "bg-amber-50/40" : ""}`}
+                      className={`hover:bg-brand-gold/5 transition-colors ${isSelected ? "bg-brand-gold/10" : "border-b border-brand-gold/5"}`}
                     >
                       {/* Checkbox */}
                       <td className="px-4 py-3">
-                        <button onClick={() => toggleSelect(product.id)} className="text-[#7A5A48] hover:text-[#C9A028]">
-                          {isSelected ? <CheckSquare size={15} className="text-[#C9A028]" /> : <Square size={15} />}
+                        <button onClick={() => toggleSelect(product.id)} className="text-brand-creamDim hover:text-brand-gold">
+                          {isSelected ? <CheckSquare size={15} className="text-brand-gold" /> : <Square size={15} />}
                         </button>
                       </td>
 
                       {/* Name + featured badge */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-[#EDE0D8] flex items-center justify-center flex-shrink-0">
-                            <Package size={14} className="text-[#7A5A48]" />
+                          <div className="w-8 h-8 rounded-lg bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
+                            <Package size={14} className="text-brand-gold" />
                           </div>
                           <div>
-                            <div className="font-medium text-[#3D2B1F] flex items-center gap-1">
+                            <div className="font-medium text-brand-cream flex items-center gap-1">
                               {product.name}
-                              {product.is_featured && <Star size={11} className="text-[#C9A028] fill-current" />}
+                              {product.is_featured && <Star size={11} className="text-brand-gold fill-current" />}
                             </div>
                             {product.is_custom && <div className="text-[10px] text-teal-600">Custom order</div>}
                           </div>

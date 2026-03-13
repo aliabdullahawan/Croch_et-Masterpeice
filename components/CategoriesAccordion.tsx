@@ -1,13 +1,15 @@
 "use client";
 /**
  * components/CategoriesAccordion.tsx
- * All 6 categories displayed + accordion expand on hover/click
+ * All 6 categories displayed + accordion expand on hover.
+ * Now using framer-motion for buttery smooth layout transitions.
  */
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const categories = [
   {
@@ -61,102 +63,139 @@ const categories = [
 ];
 
 export default function CategoriesAccordion() {
-  const [active, setActive] = useState(3);
+  const [active, setActive] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
+    // Auto-scroll through categories every 4 seconds, pausing when hovered
+    if (isHovering) return;
+    
     const timer = setInterval(() => {
-      setActive(prev => (prev + 1) % categories.length);
-    }, 3500);
+      setActive((prev) => (prev + 1) % categories.length);
+    }, 4000);
+    
     return () => clearInterval(timer);
-  }, []);
+  }, [isHovering]);
 
   return (
-    <div className="flex h-[480px] gap-2 w-full">
+    <div 
+      className="flex h-[480px] md:h-[560px] gap-2 md:gap-3 w-full"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
       {categories.map((cat, i) => {
         const isOpen = active === i;
+        
         return (
-          <div
+          <motion.div
             key={cat.id}
+            layout
+            initial={false}
+            animate={{
+              width: isOpen ? "40%" : `${60 / (categories.length - 1)}%`,
+              minWidth: isOpen ? "220px" : "50px",
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            onMouseEnter={() => setActive(i)}
             onClick={() => setActive(i)}
-            className="relative overflow-hidden cursor-pointer flex-shrink-0 rounded-2xl"
+            className="relative overflow-hidden cursor-pointer flex-shrink-0 rounded-[2rem] group"
             style={{
-              width: isOpen ? "36%" : `${64 / (categories.length - 1)}%`,
-              transition: "width 0.6s cubic-bezier(0.4,0,0.2,1)",
-              minWidth: isOpen ? "200px" : "48px",
+              boxShadow: isOpen ? "0 20px 40px rgba(0,0,0,0.2)" : "none",
             }}
           >
             {/* Background Image */}
-            <Image
-              src={cat.image}
-              alt={cat.label}
-              fill
-              className="object-cover"
-              style={{
-                filter: isOpen ? "grayscale(0%) brightness(0.72)" : "grayscale(70%) brightness(0.5)",
-                transition: "filter 0.6s ease",
+            <motion.div
+              animate={{
+                filter: isOpen ? "grayscale(0%) brightness(0.85)" : "grayscale(80%) brightness(0.4)",
+                scale: isOpen ? 1.05 : 1,
               }}
-            />
-
-            {/* Paint wash overlay */}
-            <div
+              transition={{ duration: 0.8, ease: "easeOut" }}
               className="absolute inset-0"
-              style={{
+            >
+              <Image
+                src={cat.image}
+                alt={cat.label}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            </motion.div>
+
+            {/* Premium Gradient Overlay */}
+            <motion.div
+              animate={{
                 background: isOpen
-                  ? `linear-gradient(to top, rgba(0,0,0,0.75) 0%, ${cat.color}22 60%, transparent 100%)`
-                  : "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 100%)",
-                transition: "background 0.5s ease",
+                  ? `linear-gradient(to top, rgba(15,5,0,0.95) 0%, rgba(15,5,0,0.5) 50%, transparent 100%)`
+                  : "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%)",
               }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-x-0 bottom-0 h-full pointer-events-none"
             />
 
-            {/* Collapsed: vertical label */}
-            {!isOpen && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p
-                  className="font-body text-[10px] uppercase tracking-[0.3em] whitespace-nowrap"
-                  style={{
-                    color: "rgba(255,248,243,0.8)",
-                    writingMode: "vertical-rl",
-                    transform: "rotate(180deg)",
-                  }}
+            <AnimatePresence initial={false} mode="wait">
+              {/* Collapsed: vertical label */}
+              {!isOpen && (
+                <motion.div 
+                  key="collapsed"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
                 >
-                  {cat.label}
-                </p>
-              </div>
-            )}
+                  <p
+                    className="font-body text-[11px] md:text-xs uppercase tracking-[0.3em] whitespace-nowrap opacity-70 group-hover:opacity-100 transition-opacity"
+                    style={{
+                      color: "#FFF4E6",
+                      writingMode: "vertical-rl",
+                      transform: "rotate(180deg)",
+                    }}
+                  >
+                    {cat.label}
+                  </p>
+                </motion.div>
+              )}
 
-            {/* Open: bottom content */}
-            {isOpen && (
-              <div
-                className="absolute bottom-0 left-0 right-0 p-6"
-                style={{
-                  opacity: isOpen ? 1 : 0,
-                  transform: `translateY(${isOpen ? 0 : 16}px)`,
-                  transition: "opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s",
-                }}
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-                  style={{ background: `${cat.color}33`, border: `1px solid ${cat.color}66` }}
+              {/* Open: bottom content */}
+              {isOpen && (
+                <motion.div
+                  key="expanded"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  className="absolute bottom-0 left-0 right-0 p-6 md:p-8 flex flex-col items-start pointer-events-none"
                 >
-                  <ShoppingBag size={15} style={{ color: cat.color }} />
-                </div>
-                <h3 className="font-display text-xl mb-1" style={{ color: "#FDF8F3" }}>
-                  {cat.label}
-                </h3>
-                <p className="font-body text-xs leading-relaxed mb-4" style={{ color: "rgba(253,248,243,0.7)" }}>
-                  {cat.description}
-                </p>
-                <Link
-                  href={`/products?category=${cat.slug}`}
-                  onClick={e => e.stopPropagation()}
-                  className="inline-flex items-center gap-1.5 text-xs font-body font-semibold transition-all duration-200 hover:gap-3"
-                  style={{ color: cat.color }}
-                >
-                  Explore →
-                </Link>
-              </div>
-            )}
-          </div>
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center mb-4 backdrop-blur-md"
+                    style={{ background: `rgba(255,255,255,0.15)`, border: `1px solid rgba(255,255,255,0.2)` }}
+                  >
+                    <ShoppingBag size={18} style={{ color: "#FFF4E6" }} />
+                  </div>
+                  
+                  <h3 className="font-display text-2xl md:text-3xl mb-2" style={{ color: "#FFF4E6", fontWeight: 500 }}>
+                    {cat.label}
+                  </h3>
+                  
+                  <p 
+                    className="font-body text-[13px] md:text-sm leading-relaxed mb-6 max-w-[280px]" 
+                    style={{ color: "rgba(255,244,230,0.7)" }}
+                  >
+                    {cat.description}
+                  </p>
+                  
+                  <Link
+                    href={`/products?category=${cat.slug}`}
+                    onClick={e => e.stopPropagation()}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs uppercase tracking-wider font-body font-bold transition-transform duration-300 pointer-events-auto hover:scale-105 active:scale-95"
+                    style={{ background: "#FFF4E6", color: "#1A0A05", boxShadow: "0 4px 14px rgba(0,0,0,0.2)" }}
+                  >
+                    Explore Collection
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         );
       })}
     </div>

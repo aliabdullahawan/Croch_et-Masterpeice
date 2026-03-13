@@ -15,8 +15,8 @@ import { getMockCategories }  from "@/lib/admin-mock-data";
 import type { AdminCategory } from "@/lib/admin-types";
 import { Plus, Edit2, Trash2, Tag, X, Save, Package } from "lucide-react";
 
-const INPUT = "w-full px-3 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] bg-white text-sm font-body text-[#3D2B1F] outline-none focus:border-[#C9A028] focus:ring-2 focus:ring-[rgba(201,160,40,0.12)] transition";
-const LABEL = "block text-xs font-semibold text-[#7A5A48] mb-1.5 uppercase tracking-wide";
+const INPUT = "w-full px-3 py-2 rounded-xl border border-brand-cream/15 bg-brand-base/50 text-sm font-body text-brand-cream outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/12 transition";
+const LABEL = "block text-xs font-semibold text-brand-creamDim mb-1.5 uppercase tracking-wide";
 
 /** Empty form state for add/edit dialog */
 const EMPTY_CAT = { name: "", description: "", image_url: "" };
@@ -119,17 +119,17 @@ export default function CategoriesPage() {
           {categories.map((cat) => (
             <div
               key={cat.id}
-              className="bg-white rounded-2xl border border-[rgba(61,43,31,0.08)] shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+              className="bg-brand-base/40 backdrop-blur-sm rounded-2xl border border-brand-gold/15 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
             >
               {/* Header row */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#F5EDE4] flex items-center justify-center">
-                    <Tag size={18} className="text-[#C9A028]" />
+                  <div className="w-10 h-10 rounded-xl bg-brand-gold/10 flex items-center justify-center">
+                    <Tag size={18} className="text-brand-gold" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[#3D2B1F] font-body">{cat.name}</h3>
-                    <p className="text-xs text-[#7A5A48]">/{cat.slug}</p>
+                    <h3 className="font-semibold text-brand-cream font-body">{cat.name}</h3>
+                    <p className="text-xs text-brand-creamDim">/{cat.slug}</p>
                   </div>
                 </div>
                 {/* Actions — visible on hover */}
@@ -155,10 +155,10 @@ export default function CategoriesPage() {
               )}
 
               {/* Footer: product count */}
-              <div className="flex items-center gap-1.5 text-xs text-[#7A5A48] border-t border-[rgba(61,43,31,0.06)] pt-3 mt-3">
+              <div className="flex items-center gap-1.5 text-xs text-brand-creamDim border-t border-brand-gold/10 pt-3 mt-3">
                 <Package size={12} />
                 <span>{cat.product_count} products</span>
-                <span className="ml-auto text-[10px] text-[#C8B89A]">sort: {cat.sort_order}</span>
+                <span className="ml-auto text-[10px] text-brand-gold/60">sort: {cat.sort_order}</span>
               </div>
             </div>
           ))}
@@ -166,7 +166,7 @@ export default function CategoriesPage() {
           {/* Add new category card */}
           <button
             onClick={openAdd}
-            className="rounded-2xl border-2 border-dashed border-[rgba(201,160,40,0.35)] p-5 flex flex-col items-center justify-center gap-2 text-[#C9A028] hover:bg-amber-50 hover:border-[#C9A028] transition-all duration-200 min-h-[140px]"
+            className="rounded-2xl border-2 border-dashed border-brand-gold/30 p-5 flex flex-col items-center justify-center gap-2 text-brand-gold hover:bg-brand-gold/5 hover:border-brand-gold transition-all duration-200 min-h-[140px]"
           >
             <Plus size={24} />
             <span className="text-sm font-medium">Add Category</span>
@@ -181,12 +181,12 @@ export default function CategoriesPage() {
           className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
           onClick={(e) => e.target === e.currentTarget && closeDialog()}
         >
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
+          <div className="bg-brand-base rounded-2xl shadow-xl p-6 max-w-sm w-full border border-brand-gold/20">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display text-lg font-semibold text-[#3D2B1F]">
+              <h3 className="font-display text-lg font-semibold text-brand-cream">
                 {dialog.mode === "add" ? "Add New Category" : "Edit Category"}
               </h3>
-              <button onClick={closeDialog} className="text-[#7A5A48] hover:text-[#3D2B1F]"><X size={18} /></button>
+              <button onClick={closeDialog} className="text-brand-creamDim hover:text-brand-cream"><X size={18} /></button>
             </div>
 
             <div className="space-y-3">

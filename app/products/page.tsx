@@ -5,12 +5,15 @@
  * Features: sort, availability filter, search, horizontal-scroll category tabs
  */
 
-import { useState, useMemo } from "react";
+"use client";
+import { useState, useMemo, Suspense } from "react";
+import Image                  from "next/image";
 import ProductCard            from "@/components/ProductCard";
-import AnimateIn              from "@/components/ui/AnimateIn";
 import GlowSearchBar          from "@/components/ui/animated-glowing-search-bar";
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/data/products";
 import { SortAsc, Package } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import AnimateIn, { AnimateInGroup } from "@/components/ui/AnimateIn";
 
 type SortOption = "default" | "az" | "za" | "price-asc" | "price-desc";
 
@@ -24,8 +27,11 @@ const CAT_DESCRIPTIONS: Record<string, string> = {
   custom:     "Have a unique vision? We'll crochet it just for you. Every custom piece is made with love.",
 };
 
-export default function ProductsPage() {
-  const [activeCategory, setActiveCategory] = useState("all");
+function ProductsPageContent() {
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get("category") || "all";
+
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [searchQuery,    setSearchQuery]    = useState("");
   const [sortBy,         setSortBy]         = useState<SortOption>("default");
   const [showUnavailable, setShowUnavailable] = useState(true);
@@ -53,11 +59,13 @@ export default function ProductsPage() {
       );
     }
 
-    switch (sortBy) {
-      case "az":         result.sort((a, b) => a.name.localeCompare(b.name)); break;
-      case "za":         result.sort((a, b) => b.name.localeCompare(a.name)); break;
-      case "price-asc":  result.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity)); break;
-      case "price-desc": result.sort((a, b) => (b.price ?? 0) - (a.price ?? 0)); break;
+    if (sortBy !== "default") {
+      switch (sortBy) {
+        case "az":         result.sort((a, b) => a.name.localeCompare(b.name)); break;
+        case "za":         result.sort((a, b) => b.name.localeCompare(a.name)); break;
+        case "price-asc":  result.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity)); break;
+        case "price-desc": result.sort((a, b) => (b.price ?? 0) - (a.price ?? 0)); break;
+      }
     }
 
     return result;
@@ -67,10 +75,8 @@ export default function ProductsPage() {
   const catDesc   = CAT_DESCRIPTIONS[activeCategory] ?? "";
 
   return (
-    <div className="pt-24 sm:pt-28 pb-16 sm:pb-20 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-
-        {/* ── Page Header ── */}
+    <div className="relative pt-24 sm:pt-28 pb-16 sm:pb-20 min-h-screen bg-brand-base transition-colors duration-700">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 z-10">
         <AnimateIn className="text-center mb-8 sm:mb-12">
           <span className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold">Browse</span>
           <h1 className="font-display mt-3 mb-2 text-brand-cream"
@@ -78,37 +84,38 @@ export default function ProductsPage() {
             Our Collection
           </h1>
           <div className="divider" />
-          <p className="font-body text-sm text-brand-creamDim/60 max-w-sm mx-auto">
+          <p className="font-body text-sm text-brand-creamDim max-w-sm mx-auto">
             Every piece is handmade with love. Add to cart and we&apos;ll arrange delivery via WhatsApp.
           </p>
         </AnimateIn>
 
         {/* ── Search ── */}
-        <div className="flex justify-center mb-5 sm:mb-6">
+        <AnimateIn delay={0.2} className="flex justify-center mb-5 sm:mb-6">
           <GlowSearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search products..." />
-        </div>
+        </AnimateIn>
 
         {/* ── Category tabs (horizontal scroll on mobile) ── */}
-        <div className="relative mb-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+        <AnimateIn delay={0.25} className="relative mb-4">
+          <AnimateInGroup stagger={0.05} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
             {MOCK_CATEGORIES.map(cat => (
-              <button
-                key={cat.slug}
-                onClick={() => setActiveCategory(cat.slug)}
-                className="font-body text-xs uppercase tracking-wider px-4 py-2.5 rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0"
-                style={{
-                  minHeight: "44px",
-                  background:  activeCategory === cat.slug ? "var(--gold)" : "transparent",
-                  color:       activeCategory === cat.slug ? "var(--bg-base)" : "var(--cream-dim)",
-                  borderColor: activeCategory === cat.slug ? "var(--gold)" : "rgba(61,43,31,0.15)",
-                  fontWeight:  activeCategory === cat.slug ? 600 : 400,
-                }}
-              >
-                {cat.name}
-              </button>
+              <AnimateIn key={cat.slug}>
+                <button
+                  onClick={() => setActiveCategory(cat.slug)}
+                  className="font-body text-xs uppercase tracking-wider px-4 py-2.5 rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0"
+                  style={{
+                    minHeight: "44px",
+                    background:  activeCategory === cat.slug ? "var(--gold)" : "transparent",
+                    color:       activeCategory === cat.slug ? "var(--bg-base)" : "var(--cream-dim)",
+                    borderColor: activeCategory === cat.slug ? "var(--gold)" : "rgba(61,43,31,0.15)",
+                    fontWeight:  activeCategory === cat.slug ? 600 : 400,
+                  }}
+                >
+                  {cat.name}
+                </button>
+              </AnimateIn>
             ))}
-          </div>
-        </div>
+          </AnimateInGroup>
+        </AnimateIn>
 
         {/* ── Category Hero Banner ── */}
         {catDesc && (
@@ -170,18 +177,28 @@ export default function ProductsPage() {
 
         {/* ── Product Grid ── */}
         {filtered.length === 0 ? (
-          <div className="text-center py-16 sm:py-20">
+          <AnimateIn className="text-center py-16 sm:py-20">
             <p className="font-display text-xl sm:text-2xl text-brand-creamDim/40 mb-2">No products found</p>
             <p className="font-body text-sm text-brand-creamDim/30">Try a different category or search term</p>
-          </div>
+          </AnimateIn>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <AnimateInGroup stagger={0.1} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {filtered.map(product => (
-              <ProductCard key={product.id} product={product} />
+              <AnimateIn key={product.id}>
+                <ProductCard product={product} />
+              </AnimateIn>
             ))}
-          </div>
+          </AnimateInGroup>
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-brand-base" />}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }

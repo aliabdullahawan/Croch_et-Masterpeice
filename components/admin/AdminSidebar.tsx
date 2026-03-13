@@ -88,16 +88,16 @@ export default function AdminSidebar() {
     return pathname.startsWith(href);
   }
 
-  /* ── Theme-aware colours ──────────────────────────────────── */
-  const sidebarBg   = isDark ? "#120A04"                    : "#FDF8F3";
-  const borderColor = isDark ? "rgba(201,160,40,0.15)"      : "rgba(61,43,31,0.10)";
-  const textMuted   = isDark ? "#C8B89A"                    : "#5C3D2C";
-  const textFaint   = isDark ? "#7A5A48"                    : "#8A6A58";
-  const hoverBg     = isDark ? "rgba(201,160,40,0.10)"      : "rgba(201,160,40,0.08)";
-  const hoverText   = isDark ? "#F2E9DE"                    : "#2C1A0E";
-  const activeBg    = "#C9A028";
-  const activeText  = "#1C1208";
-  const footerBg    = isDark ? "rgba(28,18,8,0.6)"          : "rgba(245,237,228,0.8)";
+  /* ── Theme-aware colors from variables ─────────────────────── */
+  const sidebarBg   = "var(--bg-base)";
+  const borderColor = "var(--border)";
+  const textMuted   = "var(--cream-dim)";
+  const textFaint   = "var(--cream-muted)";
+  const hoverBg     = "rgba(201,160,40,0.10)";
+  const hoverText   = "var(--cream)";
+  const activeBg    = "var(--gold)";
+  const activeText  = isDark ? "#1C1208" : "#FDF8F3";
+  const footerBg    = "var(--bg-deep)";
 
   return (
     <>
@@ -141,8 +141,8 @@ export default function AdminSidebar() {
               <Scissors size={15} className="text-[#1C1208]" />
             </div>
             <div ref={logoTextRef} className="min-w-0" style={{ opacity: sidebarCollapsed ? 0 : 1 }}>
-              <div className="font-display text-sm font-semibold leading-none whitespace-nowrap" style={{ color: isDark ? "#F2E9DE" : "#2C1A0E" }}>Croch_et</div>
-              <div className="text-[10px] mt-0.5 font-body tracking-wider uppercase whitespace-nowrap" style={{ color: "#C9A028" }}>Admin Panel</div>
+              <div className="font-display text-sm font-semibold leading-none whitespace-nowrap" style={{ color: "var(--cream)" }}>Croch_et</div>
+              <div className="text-[10px] mt-0.5 font-body tracking-wider uppercase whitespace-nowrap" style={{ color: "var(--gold)" }}>Admin Panel</div>
             </div>
           </Link>
 
@@ -186,7 +186,7 @@ export default function AdminSidebar() {
               <User size={15} style={{ color: "#C9A028" }} />
             </div>
             <div ref={profileRef} className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate" style={{ color: isDark ? "#F2E9DE" : "#2C1A0E" }}>Admin</div>
+              <div className="text-sm font-medium truncate" style={{ color: "var(--cream)" }}>Admin</div>
               <div className="text-[10px] truncate" style={{ color: textFaint }}>View Profile</div>
             </div>
             <ChevronRight size={12} style={{ color: textFaint }} />

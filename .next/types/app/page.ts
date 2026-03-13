@@ -1,4 +1,4 @@
-// File: D:\CLIENT\NDB\crochet-masterpiece\app\page.tsx
+// File: D:\CLIENT\crochet-masterpiece\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

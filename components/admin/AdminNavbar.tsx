@@ -50,14 +50,14 @@ export default function AdminNavbar() {
 
   /* Theme-aware colours */
   const navBg      = isDark
-    ? (scrolled ? "rgba(28,18,8,0.92)"   : "transparent")
+    ? (scrolled ? "rgba(26,13,6,0.92)"   : "transparent")
     : (scrolled ? "rgba(253,248,243,0.92)" : "transparent");
-  const borderCol  = isDark ? "rgba(201,160,40,0.15)" : "rgba(61,43,31,0.10)";
-  const textMain   = isDark ? "#F2E9DE" : "#2C1A0E";
-  const textMuted  = isDark ? "#C8B89A" : "#5C3D2C";
-  const textFaint  = isDark ? "#7A5A48" : "#8A6A58";
-  const dropdownBg = isDark ? "#1C1208" : "#FDF8F3";
-  const hoverLinkBg = isDark ? "rgba(201,160,40,0.12)" : "rgba(201,160,40,0.10)";
+  const borderCol  = "var(--border)";
+  const textMain   = "var(--cream)";
+  const textMuted  = "var(--cream-dim)";
+  const textFaint  = "var(--cream-muted)";
+  const dropdownBg = "var(--bg-base)";
+  const hoverLinkBg = "rgba(201,160,40,0.12)";
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 10);

@@ -9,11 +9,13 @@
 /* ── Light mode (default) ── */
 :root {
   --bg-base:        #FDF8F3;
+  --bg-base-rgb:    253, 248, 243;
   --bg-deep:        #F5EDE4;
+  --bg-deep-rgb:    245, 237, 228;
   --bg-card:        rgba(255,255,255,0.92);
   --bg-green:       #EDE0D8;
-  --cream:          #2C1A0E;          /* darker brown for better contrast */
-  --cream-dim:      #5C3D2C;          /* richer mid-brown */
+  --cream:          #1A0A05;          /* Very dark charcoal/brown */
+  --cream-dim:      #3D2B1F;          /* Rich deep brown */
   --cream-muted:    rgba(92,61,44,0.65);
   --gold:           #B8900A;          /* slightly deeper gold for contrast on white */
   --gold-light:     #D4A820;
@@ -28,12 +30,14 @@
 /* ── Dark mode — warm brown tones (not cold black/green) ── */
 [data-theme="dark"] {
   --bg-base:        #1A0D06;           /* deep warm brown */
+  --bg-base-rgb:    26, 13, 6;
   --bg-deep:        #120A04;           /* darkest brown */
+  --bg-deep-rgb:    18, 10, 4;
   --bg-card:        rgba(42,22,10,0.90); /* rich brown card */
   --bg-green:       #2A1810;           /* warm mid-brown */
-  --cream:          #F2E9DE;
-  --cream-dim:      #C8B89A;
-  --cream-muted:    rgba(200,184,154,0.7);
+  --cream:          #FFF4E6;           /* MUCH brighter cream for dark mode text */
+  --cream-dim:      #E6CFB3;           /* brighter mid-brown */
+  --cream-muted:    rgba(255,244,230,0.7);
   --gold:           #D4A820;
   --gold-light:     #E8C040;
   --rose:           #E8A0A8;

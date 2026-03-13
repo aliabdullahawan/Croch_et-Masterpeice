@@ -22,11 +22,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div
-      className="flex h-screen overflow-hidden transition-colors duration-300"
+      className="flex h-screen overflow-hidden transition-colors duration-500 bg-brand-base"
       style={{
         background: isDark
-          ? "linear-gradient(135deg, #120A04 0%, #1C1208 60%, #140D06 100%)"
-          : "linear-gradient(135deg, #FDF8F3 0%, #F5EDE4 60%, #F0E5D8 100%)",
+          ? "linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-base) 100%)"
+          : "linear-gradient(135deg, var(--bg-base) 0%, var(--bg-deep) 100%)",
       }}
     >
       <LoadingScreen />
