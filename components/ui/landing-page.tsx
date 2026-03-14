@@ -40,7 +40,7 @@ function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig, className }: 
   const [activeSection, setActiveSection] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [globeTransform, setGlobeTransform] = useState("");
-  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
   const animationFrameId = useRef<number>();
 
   const calculatedPositions = useMemo(() => {
