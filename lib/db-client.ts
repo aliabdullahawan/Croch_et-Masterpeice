@@ -277,6 +277,7 @@ function mapProduct(row: ProductRow): Product {
     slug: row.slug,
     description: row.description,
     price: row.price,
+    stock_qty: row.stock_qty,
     is_custom: row.is_custom,
     is_available: row.is_available,
     is_featured: row.is_featured,

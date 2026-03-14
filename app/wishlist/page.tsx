@@ -8,6 +8,7 @@ import Image               from "next/image";
 import { Heart, ShoppingBag, X, ArrowRight } from "lucide-react";
 import { useWishlist }     from "@/context/WishlistContext";
 import { useCart }         from "@/context/CartContext";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 
 export default function WishlistPage() {
   const { items, removeItem } = useWishlist();
@@ -20,7 +21,11 @@ export default function WishlistPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <Heart size={30} className="text-brand-rose mx-auto mb-3" fill="currentColor" />
-          <h1 className="font-display text-5xl text-brand-cream">My Wishlist</h1>
+          <MorphingTextReveal
+            texts={["My Wishlist", "Saved Favorites", "Dream Picks"]}
+            className="font-display text-5xl text-brand-cream"
+            interval={2600}
+          />
           <div className="divider" />
           <p className="font-body text-sm text-brand-creamDim/60">
             {items.length} {items.length === 1 ? "item" : "items"} saved

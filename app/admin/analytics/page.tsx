@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import LineGraphStatistics from "@/components/ui/line-graph-statistics";
 import PageTransition      from "@/components/ui/PageTransition";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 import { useTheme }        from "@/context/ThemeContext";
 import { fetchAnalytics, fetchAdminCategories, fetchAdminOrders } from "@/lib/db-client";
 import type { SalesDataPoint } from "@/lib/admin-types";
@@ -130,7 +131,13 @@ export default function AnalyticsPage() {
       <div className="px-4 md:px-6 pt-4 pb-3 flex flex-wrap items-center justify-between gap-3"
         style={{ borderBottom: `1px solid ${cardBorder}` }}>
         <div>
-          <h1 className="font-display text-xl" style={{ color: textMain }}>Analytics</h1>
+          <div className="font-display text-xl" style={{ color: textMain }}>
+            <MorphingTextReveal
+              texts={["Analytics", "Sales Insights", "Business Pulse"]}
+              className="font-display text-xl"
+              interval={2500}
+            />
+          </div>
           <p className="text-xs" style={{ color: textFaint }}>Sales & revenue insights for your crochet business</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

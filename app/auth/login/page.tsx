@@ -10,6 +10,7 @@ import { useRouter }                    from "next/navigation";
 import { Eye, EyeOff, LogIn }           from "lucide-react";
 import { useAuth }                      from "@/context/AuthContext";
 import { motion }                       from "framer-motion";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 
 function useTypewriter(texts: string[], speed = 80, pause = 2000) {
   const [display,  setDisplay]  = useState("");
@@ -140,7 +141,13 @@ export default function LoginPage() {
             </Link>
           </motion.div>
 
-          <motion.h1 variants={itemVariants} className="font-display text-3xl text-brand-cream mb-1">Sign In</motion.h1>
+          <motion.div variants={itemVariants} className="mb-1">
+            <MorphingTextReveal
+              texts={["Sign In", "Welcome Back", "Enter Studio"]}
+              className="font-display text-3xl text-brand-cream"
+              interval={2400}
+            />
+          </motion.div>
           <motion.p variants={itemVariants} className="font-body text-sm text-brand-creamDim/60 mb-8">
             Don't have an account?{" "}
             <Link href="/auth/signup" className="text-brand-gold hover:underline">Create one</Link>

@@ -9,11 +9,21 @@
 import { useState, useEffect } from "react";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
-export default function LoadingScreen() {
+interface LoadingScreenProps {
+  persist?: boolean;
+}
+
+export default function LoadingScreen({ persist = false }: LoadingScreenProps) {
   const [visible, setVisible] = useState(true);
   const [fading,  setFading]  = useState(false);
 
   useEffect(() => {
+    if (persist) {
+      setVisible(true);
+      setFading(false);
+      return;
+    }
+
     // Start fade-out at 2.2 s, unmount at 2.8 s
     const fadeTimer   = setTimeout(() => setFading(true),  2200);
     const removeTimer = setTimeout(() => setVisible(false), 2800);
@@ -21,7 +31,7 @@ export default function LoadingScreen() {
       clearTimeout(fadeTimer);
       clearTimeout(removeTimer);
     };
-  }, []);
+  }, [persist]);
 
   if (!visible) return null;
 
@@ -53,7 +63,7 @@ export default function LoadingScreen() {
           height:   280,
           borderRadius: "50%",
           border:   "1px solid rgba(196,132,60,0.1)",
-          animation:"pulse 3s ease-in-out infinite",
+          animation:"lumaPulse 3s ease-in-out infinite",
         }}
       />
       <div
@@ -106,23 +116,12 @@ export default function LoadingScreen() {
               height:       6,
               borderRadius: "50%",
               background:   "#c4843c",
-              animation:    `blink 1.2s ${delay}s ease-in-out infinite`,
+              animation:    `lumaBlink 1.2s ${delay}s ease-in-out infinite`,        
               opacity:      0.4,
             }}
           />
         ))}
       </div>
-
-      <style jsx>{`
-        @keyframes blink {
-          0%, 100% { opacity: 0.2; transform: scale(0.8); }
-          50%       { opacity: 1;   transform: scale(1.2); }
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1);    opacity: 0.5; }
-          50%       { transform: scale(1.05); opacity: 1;   }
-        }
-      `}</style>
     </div>
   );
 }

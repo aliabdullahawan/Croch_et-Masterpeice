@@ -6,6 +6,7 @@ import { useState } from "react";
 import Link         from "next/link";
 import { Mail }     from "lucide-react";
 import { motion }   from "framer-motion";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState("");
@@ -74,7 +75,13 @@ export default function ForgotPasswordPage() {
           </motion.div>
         ) : (
           <motion.div variants={itemVariants} className="glass-card p-8">
-            <h1 className="font-display text-2xl text-brand-cream mb-1">Reset Password</h1>
+            <div className="mb-1">
+              <MorphingTextReveal
+                texts={["Reset Password", "Secure Your Account", "Recover Access"]}
+                className="font-display text-2xl text-brand-cream"
+                interval={2400}
+              />
+            </div>
             <p className="font-body text-sm text-brand-creamDim/50 mb-7">
               Enter your email and we'll send you a reset link.
             </p>

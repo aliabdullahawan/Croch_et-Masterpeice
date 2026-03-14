@@ -13,6 +13,7 @@ import type { Product } from "@/lib/types";
 import { SortAsc, Package } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import AnimateIn, { AnimateInGroup } from "@/components/ui/AnimateIn";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 
 type SortOption = "default" | "az" | "za" | "price-asc" | "price-desc";
 
@@ -95,10 +96,13 @@ function ProductsPageContent() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 z-10">
         <AnimateIn className="text-center mb-8 sm:mb-12">
           <span className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold">Browse</span>
-          <h1 className="font-display mt-3 mb-2 text-brand-cream"
-            style={{ fontSize: "clamp(2.25rem, 7vw, 4rem)" }}>
-            Our Collection
-          </h1>
+          <div className="font-display mt-3 mb-2 text-brand-cream" style={{ fontSize: "clamp(2.25rem, 7vw, 4rem)" }}>
+            <MorphingTextReveal
+              texts={["Our Collection", "Handcrafted Collection", "Shop Crochet Pieces"]}
+              className="text-brand-cream"
+              interval={3600}
+            />
+          </div>
           <div className="divider" />
           <p className="font-body text-sm text-brand-creamDim max-w-sm mx-auto">
             Every piece is handmade with love. Add to cart and we&apos;ll arrange delivery via WhatsApp.

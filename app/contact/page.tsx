@@ -17,6 +17,7 @@
 import { useState, FormEvent } from "react";
 import AnimateIn from "@/components/ui/AnimateIn";
 import { supabase } from "@/lib/supabase";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 import { Instagram, Facebook, MessageCircle, Mail, Phone, Send, Check } from "lucide-react";
 
 const SOCIALS = [
@@ -110,7 +111,13 @@ export default function ContactPage() {
         {/* Header */}
         <AnimateIn className="text-center mb-16">
           <span className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold">Say Hello</span>
-          <h1 className="font-display text-5xl md:text-6xl text-brand-cream mt-3">Get in Touch</h1>
+          <div className="font-display text-5xl md:text-6xl text-brand-cream mt-3">
+            <MorphingTextReveal
+              texts={["Get in Touch", "Let\'s Talk Crochet", "Message Our Studio"]}
+              className="text-brand-cream"
+              interval={3400}
+            />
+          </div>
           <div className="divider" />
           <p className="font-body text-sm text-brand-creamDim/60 max-w-sm mx-auto">
             For orders, custom requests, or just to chat about crochet — we&apos;d love to hear from you.

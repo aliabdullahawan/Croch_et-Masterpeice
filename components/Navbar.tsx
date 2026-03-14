@@ -11,18 +11,20 @@
 
 import Link                   from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { ShoppingBag, Heart, Menu, X, User, LogOut, Bell } from "lucide-react";
+import { ShoppingBag, Heart, User, LogOut, Bell, Home, Store, Sparkles, MessageCircle } from "lucide-react";
 import { useCart }     from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth }     from "@/context/AuthContext";
 import { fetchSiteNotifications, type SiteNotificationItem } from "@/lib/db-client";
 import ThemeToggle     from "@/components/ui/ThemeToggle";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
+import { NavBar as TubelightNavBar, type NavItem } from "@/components/ui/tubelight-navbar";
 
-const NAV_LINKS = [
-  { href: "/",              label: "Home"         },
-  { href: "/products",      label: "Shop"         },
-  { href: "/custom-order",  label: "Custom Order" },
-  { href: "/contact",       label: "Contact"      },
+const TUBELIGHT_ITEMS: NavItem[] = [
+  { name: "Home", url: "/", icon: Home },
+  { name: "Shop", url: "/products", icon: Store },
+  { name: "Custom", url: "/custom-order", icon: Sparkles },
+  { name: "Contact", url: "/contact", icon: MessageCircle },
 ];
 
 export default function Navbar() {
@@ -31,11 +33,12 @@ export default function Navbar() {
   const { user, signOut } = useAuth();
 
   const [scrolled,    setScrolled]    = useState(false);
-  const [mobileOpen,  setMobileOpen]  = useState(false);
   const [userMenuOpen,setUserMenuOpen]= useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<SiteNotificationItem[]>([]);
   const [lastSeen, setLastSeen] = useState<number>(0);
+  const notificationRef = useRef<HTMLDivElement | null>(null);
+  const userRef = useRef<HTMLDivElement | null>(null);
   const notifCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -44,13 +47,6 @@ export default function Navbar() {
     const onScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  /* ── Close mobile menu on resize ─────────────────── */
-  useEffect(() => {
-    const onResize = () => { if (window.innerWidth >= 768) setMobileOpen(false); };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -113,46 +109,79 @@ export default function Navbar() {
     };
   }, []);
 
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
+        setNotifOpen(false);
+      }
+      if (userRef.current && !userRef.current.contains(target)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setNotifOpen(false);
+        setUserMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onEscape);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onEscape);
+    };
+  }, []);
+
   return (
     <>
-      <nav
-        className={`group/nav fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
-          scrolled
-            ? "backdrop-blur-xl border-b"
-            : "backdrop-blur-sm border-b border-transparent"
+      <header
+        className={`group/nav sticky top-0 z-[100] w-full transform-gpu transition-all duration-500 ease-out border-b ${
+          scrolled 
+            ? "backdrop-blur-xl bg-brand-base/85 border-brand-gold/30 shadow-[0_14px_38px_rgba(0,0,0,0.24)]"
+            : "backdrop-blur-md bg-brand-base/60 border-brand-gold/10 shadow-[0_8px_24px_rgba(0,0,0,0.14)]"
         }`}
-        style={{
-          background: scrolled ? "var(--bg-card)" : "rgba(var(--bg-base-rgb), 0.1)",
-          borderColor: scrolled ? "var(--border)" : "transparent",
-          boxShadow: scrolled ? "0 4px 30px rgba(0,0,0,0.1)" : "none",
-        }}
       >
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="navbar-aurora" />
+          <div className="navbar-sheen" />
+          <div className="navbar-topline" />
+        </div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="relative z-10 flex items-center justify-between h-16 md:h-20">
 
-            {/* ── Brand Logo ─────────────────────────────── */}
-            <Link
-              href="/"
-              className={`font-display text-xl md:text-2xl font-semibold tracking-wide transition-all duration-500 ${
-                scrolled ? "text-brand-cream" : "text-brand-cream"
-              } hover:text-brand-gold`}
-            >
-              Croch_et
-              <span className="text-brand-gold animate-pulse-slow"> Masterpiece</span>
-            </Link>
+            {/* ── Brand Logo + Global Morphing Text ─────────────────────────────── */}
+            <div className="flex flex-col">
+              <Link
+                href="/"
+                className={`font-display text-xl md:text-2xl font-semibold tracking-wide transition-all duration-500 ${
+                  scrolled ? "text-brand-cream" : "text-brand-cream"
+                } hover:text-brand-gold`}
+              >
+                Croch_et
+                <span className="text-brand-gold animate-pulse-slow"> Masterpiece</span>
+              </Link>
+              <div className="hidden lg:block -mt-0.5">
+                <MorphingTextReveal
+                  texts={[
+                    "Handmade With Purpose",
+                    "Crafted For Your Story",
+                    "Design Through Intention",
+                    "Creation Without Limitation",
+                  ]}
+                  className="text-[10px] text-brand-creamDim/70"
+                  interval={3600}
+                  glitchOnHover
+                />
+              </div>
+            </div>
 
-            {/* ── Desktop Links ──────────────────────────── */}
-            <div className="hidden md:flex items-center gap-8">
-              {NAV_LINKS.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="font-body text-sm text-brand-creamDim hover:text-brand-cream transition-colors duration-300 relative group"
-                >
-                  {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-brand-gold transition-all duration-300 group-hover:w-full" />
-                </Link>
-              ))}
+            {/* ── Tubelight Links (desktop in top bar, mobile floating) ───────── */}
+            <div className="pointer-events-auto">
+              <TubelightNavBar items={TUBELIGHT_ITEMS} />
             </div>
 
             {/* ── Actions ────────────────────────────────── */}
@@ -183,7 +212,8 @@ export default function Navbar() {
 
               {/* Notifications (desktop hover + mobile tap) */}
               <div
-                className="relative"
+                ref={notificationRef}
+                className="relative hidden md:block"
                 onMouseEnter={openNotifMenu}
                 onMouseLeave={closeNotifMenuWithDelay}
               >
@@ -224,8 +254,43 @@ export default function Navbar() {
                 )}
               </div>
 
+              {/* Notifications mobile */}
+              <div className="relative md:hidden">
+                <button
+                  onClick={() => {
+                    setNotifOpen((prev) => !prev);
+                    markNotificationsSeen();
+                  }}
+                  className="relative p-2 text-brand-creamDim hover:text-brand-cream transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell size={20} />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-brand-gold text-brand-base text-[10px] font-bold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+                      {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-1 glass-card min-w-[240px] max-w-[280px] py-2 shadow-card animate-slideDown">
+                    <p className="px-4 py-2 text-xs text-brand-creamDim border-b border-brand-cream/10">Latest updates</p>
+                    {notifications.length === 0 ? (
+                      <p className="px-4 py-3 text-xs text-brand-creamDim/70">No notifications yet.</p>
+                    ) : (
+                      notifications.slice(0, 5).map((item) => (
+                        <div key={`m-${item.id}`} className="px-4 py-2 border-b last:border-b-0 border-brand-cream/10">
+                          <p className="text-xs font-semibold text-brand-cream line-clamp-1">{item.title}</p>
+                          <p className="text-[11px] text-brand-creamDim leading-relaxed line-clamp-2">{item.message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* User */}
               <div
+                ref={userRef}
                 className="relative"
                 onMouseEnter={openUserMenu}
                 onMouseLeave={closeUserMenuWithDelay}
@@ -273,51 +338,10 @@ export default function Navbar() {
                 )}
               </div>
 
-              {/* Mobile hamburger */}
-              <button
-                onClick={() => setMobileOpen(o => !o)}
-                className="md:hidden p-2 text-brand-creamDim hover:text-brand-cream transition-colors"
-                aria-label="Toggle menu"
-              >
-                {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-              </button>
             </div>
           </div>
         </div>
-      </nav>
-
-      {/* ── Mobile Menu ──────────────────────────────────── */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 pt-16 bg-brand-base/80 backdrop-blur-2xl md:hidden animate-fadeIn">
-          <div className="flex flex-col items-center justify-center h-full gap-8 pb-16">
-            {NAV_LINKS.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="font-display text-3xl text-brand-cream hover:text-brand-gold transition-colors duration-300"
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="w-16 h-px bg-brand-gold/40 my-2" />
-            {user ? (
-              <>
-                <Link href="/profile" onClick={() => setMobileOpen(false)} className="text-brand-cream font-body text-sm flex items-center gap-2">
-                  <User size={16} /> Profile
-                </Link>
-                <button onClick={() => { signOut(); setMobileOpen(false); }} className="text-brand-rose font-body text-sm flex items-center gap-2">
-                  <LogOut size={16} /> Sign Out
-                </button>
-              </>
-            ) : (
-              <Link href="/auth/login" onClick={() => setMobileOpen(false)} className="btn-outline text-sm">
-                Sign In
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+      </header>
     </>
   );
 }

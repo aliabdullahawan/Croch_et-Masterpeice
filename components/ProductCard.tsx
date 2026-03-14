@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Clock3, Heart, Package2 } from "lucide-react";
 import { useWishlist } from "@/context/WishlistContext";
 import type { Product } from "@/lib/types";
 
@@ -11,10 +11,17 @@ export default function ProductCard({ product }: { product: Product }) {
   const imageUrl = product.images?.[0] ?? "/placeholder-product.jpg";
   const productUrl = `/products/${product.slug}`;
   const shortDescription = (product.description ?? "Handcrafted crochet piece made with premium care.").slice(0, 92);
+  const uploadedText = new Date(product.created_at).toLocaleString("en-PK", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const quantityText = typeof product.stock_qty === "number" ? `${product.stock_qty} in stock` : "Limited stock";
 
   return (
     <Link href={productUrl} className="group block w-full relative">
-      <article className="rounded-3xl border border-[#E9DCCB] bg-[linear-gradient(180deg,#fffdfb_0%,#fff7ee_100%)] p-3 shadow-[0_10px_30px_-20px_rgba(61,43,31,0.5)] transition-all duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_20px_40px_-20px_rgba(61,43,31,0.35)] group-hover:border-[#D7B98E]">
+      <article className="rounded-3xl border border-[#E9DCCB] bg-[linear-gradient(180deg,#fffdfb_0%,#fff7ee_100%)] p-3 shadow-[0_10px_30px_-20px_rgba(61,43,31,0.5)] transition-all duration-500 group-hover:-translate-y-1.5 group-hover:shadow-[0_22px_44px_-20px_rgba(61,43,31,0.32)] group-hover:border-[#D7B98E]">
         <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-[#FDF8F5] mb-3">
           <Image
             src={imageUrl}
@@ -42,6 +49,14 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
 
         <div className="px-1 pb-1">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#FFF1D6] px-2 py-1 text-[10px] font-semibold text-[#8C6418]">
+              <Clock3 size={11} /> {uploadedText}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F0F8F2] px-2 py-1 text-[10px] font-semibold text-[#2E6A3A]">
+              <Package2 size={11} /> {quantityText}
+            </span>
+          </div>
           <h3 className="font-display text-lg text-[#1A0A05] transition-colors duration-300 group-hover:text-[#A5791C] line-clamp-1">
             {product.name}
           </h3>

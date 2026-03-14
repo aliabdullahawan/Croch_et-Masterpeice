@@ -3,8 +3,7 @@
  * components/ui/animated-glowing-search-bar.tsx
  * ─────────────────────────────────────────────────────
  * Animated conic-gradient border search bar.
- * Colors remapped to Croch_et Masterpiece brand:
- *   Gold (#c4843c) and deep green (#102C26) glow arcs.
+ * Light theme first with warm gold accents.
  *
  * Usage:
  *   <GlowSearchBar value={q} onChange={setQ} placeholder="Search..." />
@@ -47,7 +46,7 @@ export default function GlowSearchBar({
               transition-all duration-[2000ms] group-hover:-rotate-[120deg]
               group-focus-within:rotate-[420deg] group-focus-within:duration-[4000ms]"
             style={{
-              background: "conic-gradient(#07100d, #c4843c 5%, #07100d 38%, #07100d 50%, #102C26 60%, #07100d 87%)",
+              background: "conic-gradient(#fff9f0, #c4843c 5%, #fff9f0 38%, #fff9f0 50%, #e6d8c2 60%, #fff9f0 87%)",
             }}
           />
         </div>
@@ -59,7 +58,7 @@ export default function GlowSearchBar({
               transition-all duration-[2000ms] group-hover:-rotate-[98deg]
               group-focus-within:rotate-[442deg] group-focus-within:duration-[4000ms]"
             style={{
-              background: "conic-gradient(rgba(0,0,0,0), #0d2b22, rgba(0,0,0,0) 10%, rgba(0,0,0,0) 50%, #c4843c55, rgba(0,0,0,0) 60%)",
+              background: "conic-gradient(rgba(0,0,0,0), #efe2cf, rgba(0,0,0,0) 10%, rgba(0,0,0,0) 50%, #c4843c66, rgba(0,0,0,0) 60%)",
             }}
           />
         </div>
@@ -84,7 +83,7 @@ export default function GlowSearchBar({
               transition-all duration-[2000ms] group-hover:-rotate-[110deg]
               group-focus-within:rotate-[430deg] group-focus-within:duration-[4000ms]"
             style={{
-              background: "conic-gradient(#07100d, #c4843c 5%, #07100d 14%, #07100d 50%, #102C26 60%, #07100d 64%)",
+              background: "conic-gradient(#fff9f0, #c4843c 5%, #fff9f0 14%, #fff9f0 50%, #ece0cf 60%, #fff9f0 64%)",
               filter: "brightness(1.3)",
             }}
           />
@@ -99,16 +98,16 @@ export default function GlowSearchBar({
             placeholder={placeholder}
             className="
               w-[388px] h-[56px] rounded-xl
-              bg-brand-base
+              bg-white
               border-none
-              text-brand-cream
-              placeholder-brand-creamDim/30
+              text-[#2c1a0e]
+              placeholder-[#8a6a58]/50
               font-body text-sm
               pl-12 pr-6
               focus:outline-none
               focus:ring-0
             "
-            style={{ background: "#07100d" }}
+            style={{ background: "#fff9f0" }}
           />
 
           {/* Gold mask fade */}
@@ -116,7 +115,8 @@ export default function GlowSearchBar({
             className="pointer-events-none w-[80px] h-[20px] absolute top-[18px] left-[52px]
               group-focus-within/inner:hidden"
             style={{
-              background: "linear-gradient(to right, transparent, #07100d)",
+              background: "linear-gradient(to right, transparent, #fff9f0)",
+              opacity: 0.5,
             }}
           />
 

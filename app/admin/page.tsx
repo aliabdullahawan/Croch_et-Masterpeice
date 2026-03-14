@@ -12,7 +12,8 @@
 
 import { useEffect, useState }  from "react";
 import { motion }                         from "framer-motion";
-import InteractiveGlobe                   from "@/components/ui/interactive-globe";
+import Globe                              from "@/components/ui/globe";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 import PageTransition, { StaggerItem }    from "@/components/ui/PageTransition";
 import { fetchAdminDashboardData }        from "@/lib/db-client";
 import type { DashboardMetric, Order }    from "@/lib/admin-types";
@@ -114,10 +115,14 @@ export default function AdminDashboardPage() {
             <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-[#C9A028] bg-[rgba(201,160,40,0.1)] px-3 py-1.5 rounded-full border border-[rgba(201,160,40,0.2)] mb-4">
               <Package size={11} /> Croch_et Masterpiece Studio
             </span>
-            <h1 className="font-display text-3xl lg:text-4xl text-brand-cream leading-tight mb-3">
-              Your Crochet Business,<br />
-              <span className="text-brand-gold">All in One Place</span>
-            </h1>
+            <div className="font-display text-3xl lg:text-4xl text-brand-cream leading-tight mb-3">
+              <MorphingTextReveal
+                texts={["Your Crochet Business", "Studio Operations", "Everything In One Place"]}
+                className="font-display text-3xl lg:text-4xl text-brand-cream"
+                interval={2600}
+              />
+              <span className="block text-brand-gold mt-1">All in One Place</span>
+            </div>
             <p className="font-body text-sm text-brand-creamDim/70 leading-relaxed max-w-sm mb-5">
               Manage your handcrafted products, track customer orders from Karachi to Lahore,
               and grow your crochet masterpiece — one stitch at a time.
@@ -142,8 +147,8 @@ export default function AdminDashboardPage() {
 
         {/* Right: Globe */}
         <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15, duration: 0.5 }}
-          className="relative z-10 lg:w-1/2 flex items-center justify-center min-h-[220px]">
-          <InteractiveGlobe className="w-full h-[280px]" />
+          className="relative z-10 lg:w-1/2 flex items-center justify-center min-h-[420px] overflow-hidden">
+          <Globe className="w-full h-[520px]" size={500} />
         </motion.div>
       </div>
 

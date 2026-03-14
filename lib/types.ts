@@ -33,6 +33,7 @@ export interface Product {
   slug:         string;
   description:  string | null;
   price:        number | null;
+  stock_qty?:   number;
   is_custom:    boolean;
   is_available: boolean;
   is_featured:  boolean;

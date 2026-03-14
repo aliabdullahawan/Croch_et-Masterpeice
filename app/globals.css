@@ -54,14 +54,12 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;          /* never go below 16px — prevents iOS zoom on inputs */
-  overflow-x: hidden;       /* belt-and-suspenders horizontal scroll prevention */
 }
 
 body {
   background-color: var(--bg-base);
   color: var(--cream);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -331,6 +329,232 @@ body {
   animation: fadeIn 0.22s ease both;
 }
 
+@keyframes fadeOutLabel {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0.5rem) scale(0.95);
+  }
+}
+
+.animate-fadeOut {
+  animation: fadeOutLabel 1.3s ease-out both;
+}
+
+@keyframes morphChar {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-5px) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes glitch {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-2px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  60% {
+    transform: translateX(-1px);
+  }
+  80% {
+    transform: translateX(1px);
+  }
+}
+
+@keyframes pulseSoft {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.morph-char {
+  animation: morphChar 0.35s ease-out both;
+}
+
+.glitch-effect {
+  animation: glitch 0.3s linear;
+}
+
+@keyframes textLiftIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .font-display,
+  .font-body {
+    animation: textLiftIn 0.5s ease both;
+  }
+
+  h1:hover,
+  h2:hover,
+  h3:hover,
+  .font-display:hover {
+    animation: glitch 0.25s linear;
+  }
+}
+
+button,
+.btn-gold,
+.btn-outline,
+a[role="button"],
+.button-pop,
+a.btn-gold,
+a.btn-outline {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover,
+.btn-gold:hover,
+.btn-outline:hover,
+a[role="button"]:hover,
+.button-pop:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+button:active,
+.btn-gold:active,
+.btn-outline:active,
+a[role="button"]:active,
+.button-pop:active,
+a.btn-gold:active,
+a.btn-outline:active {
+  transform: translateY(0) scale(0.98);
+}
+
+button::after,
+.btn-gold::after,
+.btn-outline::after,
+a[role="button"]::after,
+.button-pop::after,
+a.btn-gold::after,
+a.btn-outline::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%) scale(0);
+  background: radial-gradient(circle, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+button:active::after,
+.btn-gold:active::after,
+.btn-outline:active::after,
+a[role="button"]:active::after,
+.button-pop:active::after,
+a.btn-gold:active::after,
+a.btn-outline:active::after {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(12);
+  transition: transform 0.45s ease, opacity 0.45s ease;
+}
+
 /* Horizontal scroll helper for mobile tab bars */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes navbarSheenMove {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(140%);
+  }
+}
+
+@keyframes navbarToplinePulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.navbar-aurora {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(201, 160, 40, 0.18) 0%, transparent 34%),
+    radial-gradient(circle at 82% 10%, rgba(74, 171, 171, 0.12) 0%, transparent 36%);
+}
+
+.navbar-sheen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.16) 48%, transparent 100%);
+  filter: blur(6px);
+  animation: navbarSheenMove 5.5s ease-in-out infinite;
+}
+
+.navbar-topline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,160,40,0.72), transparent);
+  animation: navbarToplinePulse 2.8s ease-in-out infinite;
+}
+
+@keyframes lumaA {
+  0%    { inset: 0 35px 35px 0; }
+  12.5% { inset: 0 35px 0 0; }
+  25%   { inset: 35px 35px 0 0; }
+  37.5% { inset: 35px 0 0 0; }
+  50%   { inset: 35px 0 0 35px; }
+  62.5% { inset: 0 0 0 35px; }
+  75%   { inset: 0 0 35px 35px; }
+  87.5% { inset: 0 0 35px 0; }
+  100%  { inset: 0 35px 35px 0; }
+}
+
+@keyframes lumaBlink {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50%      { opacity: 1;   transform: scale(1.2); }
+}
+
+@keyframes lumaPulse {
+  0%, 100% { transform: scale(1);    opacity: 0.5; }
+  50%      { transform: scale(1.05); opacity: 1;   }
+}

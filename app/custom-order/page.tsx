@@ -10,6 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createCustomOrder } from "@/lib/db-client";
 import AnimateIn, { AnimateInGroup } from "@/components/ui/AnimateIn";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 import {
   Sparkles,
   MessageCircle,
@@ -185,7 +186,13 @@ Looking forward to hearing from you!`;
             </div>
           </AnimateIn>
           <AnimateIn delay={0.1}>
-            <h1 className="font-display text-5xl mb-3 text-brand-cream">Custom Order</h1>
+            <div className="font-display text-5xl mb-3 text-brand-cream">
+              <MorphingTextReveal
+                texts={["Custom Order", "Design Your Piece", "Create With Us"]}
+                className="text-brand-cream"
+                interval={3500}
+              />
+            </div>
           </AnimateIn>
           <AnimateIn delay={0.15}>
             <div className="divider" />

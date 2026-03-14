@@ -12,6 +12,7 @@ import { useTheme }                    from "@/context/ThemeContext";
 import { supabase }                    from "@/lib/supabase";
 import { uploadAvatarToStorage }       from "@/lib/avatar-storage";
 import { fetchUserNotifications, fetchUserOrders, type AdminNotificationItem, type UserOrderSummary } from "@/lib/db-client";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 import {
   User, Mail, MapPin, Camera, ShoppingBag,
   Heart, Bell, BellOff, LogIn, Package, Clock, Lock, Save, CheckCircle,
@@ -178,7 +179,13 @@ export default function UserProfilePage() {
           <div className="w-20 h-20 rounded-full bg-[rgba(201,160,40,0.1)] border-2 border-[rgba(201,160,40,0.2)] flex items-center justify-center mx-auto mb-5">
             <User size={32} className="text-brand-gold" />
           </div>
-          <h1 className="font-display text-3xl text-brand-cream mb-3">Your Profile</h1>
+          <div className="mb-3">
+            <MorphingTextReveal
+              texts={["Your Profile", "Member Space", "Account Hub"]}
+              className="font-display text-3xl text-brand-cream"
+              interval={2500}
+            />
+          </div>
           <p className="font-body text-sm text-brand-creamDim/60 mb-7">
             Sign in to view your orders, wishlist, and account details.
           </p>

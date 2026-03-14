@@ -9,6 +9,7 @@ import Link         from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ShieldCheck, Scissors } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -52,7 +53,13 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="bg-[rgba(42,22,10,0.8)] border border-[rgba(201,160,40,0.15)] rounded-2xl p-7 backdrop-blur-sm">
-          <h1 className="font-display text-xl text-[#F2E9DE] mb-0.5">Admin Sign In</h1>
+          <div className="mb-0.5">
+            <MorphingTextReveal
+              texts={["Admin Sign In", "Control Panel Access", "Studio Console"]}
+              className="font-display text-xl text-[#F2E9DE]"
+              interval={2400}
+            />
+          </div>
           <p className="font-body text-xs text-[#7A5A48] mb-6">Restricted access — admin credentials only</p>
 
           {error && (

@@ -33,7 +33,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [loading, isAuthPage, adminUser, router]);
 
   if (!isAuthPage && loading) {
-    return <LoadingScreen />;
+    return <LoadingScreen persist />;
   }
 
   if (!isAuthPage && !adminUser) {

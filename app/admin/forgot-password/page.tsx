@@ -6,6 +6,7 @@ import { useState } from "react";
 import Link         from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Mail, Scissors } from "lucide-react";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 
 export default function AdminForgotPasswordPage() {
   const [email,   setEmail]   = useState("");
@@ -65,7 +66,13 @@ export default function AdminForgotPasswordPage() {
             </div>
           ) : (
             <>
-              <h1 className="font-display text-xl text-[#F2E9DE] mb-1">Reset Password</h1>
+              <div className="mb-1">
+                <MorphingTextReveal
+                  texts={["Reset Password", "Admin Recovery", "Restore Access"]}
+                  className="font-display text-xl text-[#F2E9DE]"
+                  interval={2400}
+                />
+              </div>
               <p className="font-body text-xs text-[#7A5A48] mb-6">Admin password reset via email</p>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error ? (

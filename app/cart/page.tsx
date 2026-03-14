@@ -16,6 +16,7 @@ import Link             from "next/link";
 import Image            from "next/image";
 import { Trash2, Plus, Minus, MessageCircle, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart }      from "@/context/CartContext";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 
 export default function CartPage() {
   const { items, removeItem, updateQty, clearCart, totalItems, totalPrice } = useCart();
@@ -36,7 +37,11 @@ export default function CartPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <ShoppingBag size={30} className="text-brand-gold mx-auto mb-3" />
-          <h1 className="font-display text-5xl text-brand-cream">My Cart</h1>
+          <MorphingTextReveal
+            texts={["My Cart", "Selected Pieces", "Ready To Order"]}
+            className="font-display text-5xl text-brand-cream"
+            interval={2600}
+          />
           <div className="divider" />
           <p className="font-body text-sm text-brand-creamDim/60">
             {totalItems} {totalItems === 1 ? "item" : "items"}

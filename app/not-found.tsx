@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { MorphingTextReveal } from "@/components/ui/morphing-text-reveal";
 
 export default function NotFound() {
   return (
@@ -12,7 +13,13 @@ export default function NotFound() {
         <p className="font-display text-[120px] md:text-[180px] text-brand-deep leading-none select-none">
           404
         </p>
-        <h1 className="font-display text-3xl text-brand-cream mb-3 -mt-4">Page Not Found</h1>
+        <div className="mb-3 -mt-4">
+          <MorphingTextReveal
+            texts={["Page Not Found", "Lost In Stitches", "Route Unravelled"]}
+            className="font-display text-3xl text-brand-cream"
+            interval={2600}
+          />
+        </div>
         <p className="font-body text-sm text-brand-creamDim/50 mb-8 max-w-sm mx-auto">
           Looks like this stitch unravelled. Let's get you back on track.
         </p>

@@ -1,81 +1,93 @@
 "use client";
-/**
- * components/ui/spotlight-card.tsx
- * ─────────────────────────────────────────────────────
- * Pointer-tracking spotlight glow effect on card borders.
- * Adapted to Croch_et Masterpiece brand — gold/green glow palette.
- */
-
 import React, { useEffect, useRef, ReactNode } from "react";
 
 interface GlowCardProps {
-  children:    ReactNode;
-  className?:  string;
-  glowColor?:  "gold" | "green" | "rose" | "cream";
+  children?: ReactNode;
+  className?: string;
+  glowColor?: "blue" | "purple" | "green" | "red" | "orange";
+  size?: "sm" | "md" | "lg";
+  width?: string | number;
+  height?: string | number;
   customSize?: boolean;
 }
 
-/* ── Brand-mapped glow hues ──────────────────────────── */
 const glowColorMap = {
-  gold:  { base: 35,  spread: 20  },   // warm amber/gold
-  green: { base: 155, spread: 30  },   // forest green
-  rose:  { base: 345, spread: 20  },   // muted rose
-  cream: { base: 40,  spread: 15  },   // warm cream
+  blue: { base: 220, spread: 200 },
+  purple: { base: 280, spread: 300 },
+  green: { base: 120, spread: 200 },
+  red: { base: 0, spread: 200 },
+  orange: { base: 30, spread: 200 },
+};
+
+const sizeMap = {
+  sm: "w-48 h-64",
+  md: "w-64 h-80",
+  lg: "w-80 h-96",
 };
 
 export function GlowCard({
   children,
-  className    = "",
-  glowColor    = "gold",
-  customSize   = true,
+  className = "",
+  glowColor = "blue",
+  size = "md",
+  width,
+  height,
+  customSize = false,
 }: GlowCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
-  /* Track pointer position as CSS vars on the card */
   useEffect(() => {
-    const sync = (e: PointerEvent) => {
+    const syncPointer = (e: PointerEvent) => {
       if (!cardRef.current) return;
-      cardRef.current.style.setProperty("--x",  e.clientX.toFixed(2));
+      cardRef.current.style.setProperty("--x", e.clientX.toFixed(2));
       cardRef.current.style.setProperty("--xp", (e.clientX / window.innerWidth).toFixed(2));
-      cardRef.current.style.setProperty("--y",  e.clientY.toFixed(2));
+      cardRef.current.style.setProperty("--y", e.clientY.toFixed(2));
       cardRef.current.style.setProperty("--yp", (e.clientY / window.innerHeight).toFixed(2));
     };
-    document.addEventListener("pointermove", sync);
-    return () => document.removeEventListener("pointermove", sync);
+
+    document.addEventListener("pointermove", syncPointer);
+    return () => document.removeEventListener("pointermove", syncPointer);
   }, []);
 
   const { base, spread } = glowColorMap[glowColor];
 
-  const cardStyles: React.CSSProperties & Record<string, string | number> = {
-    "--base":               base,
-    "--spread":             spread,
-    "--radius":             "16",
-    "--border":             "1.5",
-    "--saturation":         "70",
-    "--lightness":          "60",
-    "--backdrop":           "rgba(16,44,38,0.35)",
-    "--backup-border":      "rgba(247,231,206,0.07)",
-    "--size":               "220",
-    "--outer":              "1",
-    "--border-size":        "calc(var(--border,2) * 1px)",
-    "--spotlight-size":     "calc(var(--size,200) * 1px)",
-    "--hue":                "calc(var(--base) + (var(--xp,0) * var(--spread,0)))",
-    "--bg-spot-opacity":    "0.12",
-    "--border-spot-opacity":"0.8",
-    "--border-light-opacity":"0.3",
-    backgroundImage: `radial-gradient(
-      var(--spotlight-size) var(--spotlight-size) at
-      calc(var(--x,0) * 1px) calc(var(--y,0) * 1px),
-      hsl(var(--hue) calc(var(--saturation)*1%) calc(var(--lightness)*1%) / var(--bg-spot-opacity)),
-      transparent
-    )`,
-    backgroundColor:    "var(--backdrop, transparent)",
-    backgroundSize:     "calc(100% + 2*var(--border-size)) calc(100% + 2*var(--border-size))",
-    backgroundPosition: "50% 50%",
-    backgroundAttachment: "fixed",
-    border:             "var(--border-size) solid var(--backup-border)",
-    position:           "relative",
-    touchAction:        "none",
+  const getSizeClasses = () => (customSize ? "" : sizeMap[size]);
+
+  const getInlineStyles = () => {
+    const styles: React.CSSProperties & Record<string, string | number> = {
+      "--base": base,
+      "--spread": spread,
+      "--radius": "14",
+      "--border": "3",
+      "--backdrop": "hsl(0 0% 60% / 0.12)",
+      "--backup-border": "var(--backdrop)",
+      "--size": "200",
+      "--outer": "1",
+      "--border-size": "calc(var(--border, 2) * 1px)",
+      "--spotlight-size": "calc(var(--size, 150) * 1px)",
+      "--hue": "calc(var(--base) + (var(--xp, 0) * var(--spread, 0)))",
+      backgroundImage: `radial-gradient(
+        var(--spotlight-size) var(--spotlight-size) at
+        calc(var(--x, 0) * 1px)
+        calc(var(--y, 0) * 1px),
+        hsl(var(--hue, 210) calc(var(--saturation, 100) * 1%) calc(var(--lightness, 70) * 1%) / var(--bg-spot-opacity, 0.1)), transparent
+      )`,
+      backgroundColor: "var(--backdrop, transparent)",
+      backgroundSize: "calc(100% + (2 * var(--border-size))) calc(100% + (2 * var(--border-size)))",
+      backgroundPosition: "50% 50%",
+      backgroundAttachment: "fixed",
+      border: "var(--border-size) solid var(--backup-border)",
+      position: "relative",
+      touchAction: "none",
+    };
+
+    if (width !== undefined) {
+      styles.width = typeof width === "number" ? `${width}px` : width;
+    }
+    if (height !== undefined) {
+      styles.height = typeof height === "number" ? `${height}px` : height;
+    }
+    return styles;
   };
 
   const css = `
@@ -88,7 +100,7 @@ export function GlowCard({
       border: var(--border-size) solid transparent;
       border-radius: calc(var(--radius) * 1px);
       background-attachment: fixed;
-      background-size: calc(100% + 2*var(--border-size)) calc(100% + 2*var(--border-size));
+      background-size: calc(100% + (2 * var(--border-size))) calc(100% + (2 * var(--border-size)));
       background-repeat: no-repeat;
       background-position: 50% 50%;
       mask: linear-gradient(transparent,transparent), linear-gradient(white,white);
@@ -115,10 +127,10 @@ export function GlowCard({
     [data-glow] [data-glow] {
       position: absolute; inset: 0;
       will-change: filter;
-      opacity: var(--outer,1);
-      border-radius: calc(var(--radius)*1px);
-      border-width: calc(var(--border-size)*20);
-      filter: blur(calc(var(--border-size)*10));
+      opacity: var(--outer, 1);
+      border-radius: calc(var(--radius) * 1px);
+      border-width: calc(var(--border-size) * 20);
+      filter: blur(calc(var(--border-size) * 10));
       background: none;
       pointer-events: none;
       border: none;
@@ -135,8 +147,20 @@ export function GlowCard({
       <div
         ref={cardRef}
         data-glow
-        style={cardStyles}
-        className={`rounded-2xl relative shadow-card backdrop-blur-sm ${className}`}
+        style={getInlineStyles()}
+        className={`
+          ${getSizeClasses()}
+          ${!customSize ? "aspect-[3/4]" : ""}
+          rounded-2xl
+          relative
+          grid
+          grid-rows-[1fr_auto]
+          shadow-[0_1rem_2rem_-1rem_black]
+          p-4
+          gap-4
+          backdrop-blur-[5px]
+          ${className}
+        `}
       >
         <div data-glow />
         {children}
