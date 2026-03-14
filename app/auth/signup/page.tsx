@@ -16,9 +16,11 @@ import Link             from "next/link";
 import { useRouter }   from "next/navigation";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { motion }      from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { signUp } = useAuth();
 
   const [name,     setName]     = useState("");
   const [email,    setEmail]    = useState("");
@@ -44,19 +46,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      /* ── REPLACE with Supabase auth ─────────────────
-         const { error } = await supabase.auth.signUp({
-           email,
-           password,
-           options: { data: { full_name: name } },
-         });
-         if (error) throw error;
-         setSuccess(true);
-      ─────────────────────────────────────────────── */
-
-      // Mock signup (remove when Supabase is connected)
-      await new Promise(r => setTimeout(r, 800));
-      localStorage.setItem("cm_user", JSON.stringify({ id: "mock-id", email, name }));
+      await signUp(email, password, name);
       setSuccess(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sign up failed. Please try again.");
@@ -88,7 +78,7 @@ export default function SignupPage() {
           </div>
           <h2 className="font-display text-3xl text-brand-cream mb-3">Account Created!</h2>
           <p className="font-body text-sm text-brand-creamDim/60 mb-8">
-            Welcome to Croch_et Masterpiece, {name}! You're all set to start shopping.
+            Welcome to Croch_et Masterpiece, {name}! You&apos;re all set to start shopping.
           </p>
           <motion.button 
             onClick={() => router.push("/")} 
@@ -173,7 +163,7 @@ export default function SignupPage() {
                   placeholder="Minimum 8 characters" className="input-dark pr-10"
                   autoComplete="new-password" />
                 <button type="button" onClick={() => setShowPw(s => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-creamDim/40 hover:text-brand-cream hover:text-brand-creamDim">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-creamDim/40 hover:text-brand-cream">
                   {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>

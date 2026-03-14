@@ -17,10 +17,6 @@ import { useAdmin }         from "@/context/AdminContext";
 import { useTheme }         from "@/context/ThemeContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { useAuth }          from "@/context/AuthContext";
-import {
-  getAdminNotifications,
-  markAllAdminNotificationsRead,
-} from "@/lib/order-store";
 
 const NAV_LINKS = [
   { href: "/admin",            label: "Dashboard",  icon: <LayoutDashboard size={14} /> },
@@ -36,14 +32,13 @@ export default function AdminNavbar() {
   const router                     = useRouter();
   const { toggleSidebar }          = useAdmin();
   const { theme }                  = useTheme();
-  const { adminUnread, markAdminRead } = useNotifications();
+  const { adminUnread, markAdminRead, adminNotifications, refreshAdminUnread } = useNotifications();
   const { adminUser, adminSignOut } = useAuth();
   const isDark = theme === "dark";
 
   const [scrolled,      setScrolled]      = useState(false);
   const [notifOpen,     setNotifOpen]     = useState(false);
   const [profileOpen,   setProfileOpen]   = useState(false);
-  const [notifications, setNotifications] = useState<ReturnType<typeof getAdminNotifications>>([]);
 
   const notifRef   = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -75,10 +70,18 @@ export default function AdminNavbar() {
   }, []);
 
   function openNotifications() {
-    setNotifications(getAdminNotifications());
-    setNotifOpen(o => !o);
-    if (!notifOpen) markAllAdminNotificationsRead();
+    setNotifOpen((open) => {
+      const nextOpen = !open;
+      if (nextOpen) {
+        markAdminRead();
+      }
+      return nextOpen;
+    });
   }
+
+  useEffect(() => {
+    refreshAdminUnread();
+  }, [refreshAdminUnread]);
 
   function isActive(href: string) {
     if (href === "/admin") return pathname === "/admin";
@@ -162,10 +165,10 @@ export default function AdminNavbar() {
                   <div className="text-xs font-semibold text-[#C9A028] uppercase tracking-wide">Notifications</div>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
-                  {notifications.length === 0 ? (
+                  {adminNotifications.length === 0 ? (
                     <p className="text-xs text-center py-6" style={{ color: textFaint }}>No notifications yet</p>
                   ) : (
-                    notifications.slice(0, 10).map(n => (
+                    adminNotifications.slice(0, 10).map(n => (
                       <div key={n.id} className={`px-4 py-3 text-xs ${n.read ? "opacity-50" : ""}`}
                         style={{ borderBottom: `1px solid ${borderCol}` }}>
                         <p style={{ color: textMuted }}>{n.message}</p>

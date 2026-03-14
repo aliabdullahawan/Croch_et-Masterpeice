@@ -85,7 +85,11 @@ export default function AdminProfilePage() {
           <div className="relative">
             <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[rgba(201,160,40,0.1)] border-2 border-[rgba(201,160,40,0.2)] flex items-center justify-center">
               {profile.avatar
-                ? <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ? (
+                  // Avatar preview is generated from local FileReader data URL.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                )
                 : <Scissors size={28} className="text-[#C9A028]" />
               }
             </div>

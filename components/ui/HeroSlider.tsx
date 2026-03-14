@@ -9,9 +9,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles, ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MOCK_PRODUCTS } from "@/data/products";
+import { fetchProducts } from "@/lib/db-client";
+import type { Product } from "@/lib/types";
 
-const SLIDES = [
+const SLIDES_TEMPLATE = [
   {
     id: 0,
     tag: "Handcrafted Luxury",
@@ -21,7 +22,6 @@ const SLIDES = [
     cta: { label: "Shop Collection", href: "/products" },
     ctaSecondary: { label: "Custom Order", href: "/custom-order" },
     image: "/images/hero-bg-1.jpg",
-    product: MOCK_PRODUCTS[0],
   },
   {
     id: 1,
@@ -32,7 +32,6 @@ const SLIDES = [
     cta: { label: "Explore Accessories", href: "/products?category=accessories" },
     ctaSecondary: { label: "Our Story", href: "/about" },
     image: "/images/hero-bg-2.jpg",
-    product: MOCK_PRODUCTS[1],
   },
   {
     id: 2,
@@ -43,27 +42,39 @@ const SLIDES = [
     cta: { label: "Shop Home Décor", href: "/products?category=home-decor" },
     ctaSecondary: { label: "View All", href: "/products" },
     image: "/images/hero-bg-3.jpg",
-    product: MOCK_PRODUCTS[2],
   },
 ];
 
 export default function HeroSlider() {
   const [current, setCurrent] = useState(0);
   const [busy, setBusy]       = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const slides = SLIDES_TEMPLATE.map((slide, index) => ({
+    ...slide,
+    product: products[index] ?? products[0] ?? null,
+  }));
+
+  useEffect(() => {
+    void (async () => {
+      const featured = await fetchProducts({ featuredOnly: true });
+      setProducts(featured);
+    })();
+  }, []);
 
   const goNext = useCallback(() => {
     if (busy) return;
     setBusy(true);
-    setCurrent((prev) => (prev + 1) % SLIDES.length);
+    setCurrent((prev) => (prev + 1) % slides.length);
     setTimeout(() => setBusy(false), 800);
-  }, [busy]);
+  }, [busy, slides.length]);
 
   const goPrev = useCallback(() => {
     if (busy) return;
     setBusy(true);
-    setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+    setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
     setTimeout(() => setBusy(false), 800);
-  }, [busy]);
+  }, [busy, slides.length]);
 
   useEffect(() => {
     const t = setInterval(goNext, 6000); 
@@ -91,7 +102,7 @@ export default function HeroSlider() {
             transition={{ duration: 8, ease: "easeOut" }}
           >
             <Image
-              src={SLIDES[current].image}
+              src={slides[current].image}
               alt="Hero Background"
               fill
               priority
@@ -134,7 +145,7 @@ export default function HeroSlider() {
                 style={{ background: "rgba(226, 184, 74, 0.15)", border: "1px solid rgba(226, 184, 74, 0.3)", color: "#E2B84A", fontWeight: 700 }}
               >
                 <Sparkles size={12} />
-                {SLIDES[current].tag}
+                {slides[current].tag}
               </motion.div>
 
               {/* Headline */}
@@ -145,8 +156,8 @@ export default function HeroSlider() {
                 className="font-display leading-[1.05] mb-5 text-brand-cream" 
                 style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)" }}
               >
-                {SLIDES[current].headline.map((line, i) => (
-                  <span key={i} className="block" style={i === SLIDES[current].accentLine ? { color: "#D4A820", fontStyle: "italic" } : {}}>
+                {slides[current].headline.map((line, i) => (
+                  <span key={i} className="block" style={i === slides[current].accentLine ? { color: "#D4A820", fontStyle: "italic" } : {}}>
                     {line}
                   </span>
                 ))}
@@ -159,7 +170,7 @@ export default function HeroSlider() {
                 transition={{ delay: 0.4 }}
                 className="font-body text-[15px] md:text-base leading-relaxed mb-8 text-brand-creamDim/80" 
               >
-                {SLIDES[current].sub}
+                {slides[current].sub}
               </motion.p>
 
               {/* CTAs */}
@@ -170,19 +181,19 @@ export default function HeroSlider() {
                 className="flex flex-wrap gap-4"
               >
                 <Link
-                  href={SLIDES[current].cta.href}
+                  href={slides[current].cta.href}
                   className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-body font-bold text-sm transition-all duration-300 hover:scale-105"
                   style={{ background: "linear-gradient(135deg, #C9A028, #E2B84A)", color: "#fff", boxShadow: "0 6px 20px rgba(226, 184, 74, 0.4)" }}
                 >
-                  {SLIDES[current].cta.label} 
+                  {slides[current].cta.label}
                   <motion.span className="group-hover:translate-x-1 transition-transform"><ArrowRight size={15} /></motion.span>
                 </Link>
                 <Link
-                  href={SLIDES[current].ctaSecondary.href}
+                  href={slides[current].ctaSecondary.href}
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-body font-semibold text-sm transition-all duration-300 hover:scale-105"
                   style={{ border: "1.5px solid var(--border)", color: "var(--cream)", background: "rgba(255,255,255,0.05)" }}
                 >
-                  {SLIDES[current].ctaSecondary.label}
+                  {slides[current].ctaSecondary.label}
                 </Link>
               </motion.div>
             </div>
@@ -199,8 +210,8 @@ export default function HeroSlider() {
                 }}
               >
                 <Image 
-                  src={SLIDES[current].product?.images?.[0] ?? "/placeholder-product.jpg"}
-                  alt={SLIDES[current].product?.name ?? "Product image"}
+                  src={slides[current].product?.images?.[0] ?? "/placeholder-product.jpg"}
+                  alt={slides[current].product?.name ?? "Product image"}
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
@@ -211,17 +222,17 @@ export default function HeroSlider() {
                   style={{ background: "linear-gradient(to top, rgba(15, 5, 2, 0.9) 0%, rgba(15, 5, 2, 0.4) 60%, transparent 100%)" }}
                 >
                   <p className="font-body text-[10px] uppercase tracking-[0.2em] mb-1.5" style={{ color: "#E2B84A" }}>
-                    {SLIDES[current].product?.category?.name}
+                    {slides[current].product?.category?.name}
                   </p>
                   <h3 className="font-display text-2xl mb-3 text-white">
-                    {SLIDES[current].product?.name}
+                    {slides[current].product?.name}
                   </h3>
                   <div className="flex items-center justify-between">
                     <p className="font-body font-bold text-lg text-[#FFF4E6]">
-                      PKR {SLIDES[current].product?.price?.toLocaleString()}
+                      {slides[current].product?.price ? `PKR ${slides[current].product.price.toLocaleString()}` : "Price on request"}
                     </p>
                     <Link
-                      href={`/products/${SLIDES[current].product?.slug}`}
+                      href={slides[current].product ? `/products/${slides[current].product.slug}` : "/products"}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full font-body text-xs font-bold transition-all hover:scale-105"
                       style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
                     >
@@ -258,7 +269,7 @@ export default function HeroSlider() {
 
       {/* ── Slide Indicators ── */}
       <div className="absolute bottom-10 left-6 md:left-12 z-30 flex gap-2.5 items-center pointer-events-auto">
-        {SLIDES.map((_, i) => (
+        {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => {

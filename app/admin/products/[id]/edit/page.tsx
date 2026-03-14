@@ -5,11 +5,11 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import AdminTopbar           from "@/components/admin/AdminTopbar";
 import { useAdmin }          from "@/context/AdminContext";
-import { getMockProducts, getMockCategories } from "@/lib/admin-mock-data";
+import { fetchAdminProductById, fetchAdminCategories, updateAdminProduct, createAdminCategory, getLastAdminDbError } from "@/lib/db-client";
 import type { AdminCategory } from "@/lib/admin-types";
 import { Save, ChevronLeft, Plus, X, Tag, Upload, ImageIcon, AlertCircle } from "lucide-react";
 
@@ -36,9 +36,27 @@ export default function EditProductPage() {
    * TODO: Supabase — const { data: product } = await supabase
    *   .from('products').select('*').eq('id', productId).single()
    */
-  const products   = useMemo(() => getMockProducts(), []);
-  const product    = products.find((p) => p.id === productId);
-  const [categories, setCategories] = useState<AdminCategory[]>(() => getMockCategories());
+  const [product, setProduct] = useState<Awaited<ReturnType<typeof fetchAdminProductById>>>(null);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const [productRow, categoryRows] = await Promise.all([
+        fetchAdminProductById(productId),
+        fetchAdminCategories(),
+      ]);
+      setProduct(productRow);
+      setCategories(categoryRows.map((row, index) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        description: null,
+        image_url: null,
+        sort_order: index + 1,
+        product_count: row.product_count,
+      })));
+    })();
+  }, [productId]);
 
   /* ── Form state — pre-filled from existing product ────────── */
   const [form, setForm] = useState({
@@ -55,6 +73,27 @@ export default function EditProductPage() {
     is_featured:  product?.is_featured  ?? false,
     is_custom:    product?.is_custom    ?? false,
   });
+
+  useEffect(() => {
+    if (!product) {
+      return;
+    }
+
+    setForm({
+      name: product.name ?? "",
+      description: product.description ?? "",
+      sku: product.sku ?? "",
+      price: product.price?.toString() ?? "",
+      cost: product.cost?.toString() ?? "",
+      stock_qty: product.stock_qty?.toString() ?? "",
+      category_id: product.category_id?.toString() ?? "",
+      tags: product.tags ?? [],
+      images: product.images ?? [],
+      is_available: product.is_available ?? true,
+      is_featured: product.is_featured ?? false,
+      is_custom: product.is_custom ?? false,
+    });
+  }, [product]);
   const [tagInput,   setTagInput]   = useState("");
   const [saving,     setSaving]     = useState(false);
   const [uploading,  setUploading]  = useState(false);
@@ -103,18 +142,26 @@ export default function EditProductPage() {
   async function handleAddCategory() {
     if (!newCat.name.trim()) return;
     setCatSaving(true);
-    await new Promise((r) => setTimeout(r, 400));
-    const created: AdminCategory = {
-      id: Math.max(...categories.map((c) => c.id)) + 1,
-      name: newCat.name.trim(),
-      slug: newCat.name.trim().toLowerCase().replace(/\s+/g, "-"),
-      description: newCat.description || null,
+    const ok = await createAdminCategory({ name: newCat.name.trim(), description: newCat.description || null });
+    if (!ok) {
+      setCatSaving(false);
+      alert(getLastAdminDbError() ?? "Could not create category. Check admin role and RLS policies.");
+      return;
+    }
+    const rows = await fetchAdminCategories();
+    setCategories(rows.map((row, index) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: null,
       image_url: null,
-      sort_order: categories.length + 1,
-      product_count: 0,
-    };
-    setCategories((p) => [...p, created]);
-    set("category_id", String(created.id));
+      sort_order: index + 1,
+      product_count: row.product_count,
+    })));
+    const created = rows.find((row) => row.name === newCat.name.trim());
+    if (created) {
+      set("category_id", String(created.id));
+    }
     setNewCat({ name: "", description: "" });
     setShowCatDialog(false);
     setCatSaving(false);
@@ -126,7 +173,24 @@ export default function EditProductPage() {
   async function handleSave() {
     if (!form.name.trim()) return;
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
+    const ok = await updateAdminProduct(productId, {
+      category_id: form.category_id ? Number(form.category_id) : null,
+      name: form.name.trim(),
+      description: form.description,
+      sku: form.sku,
+      price: form.price ? Number(form.price) : null,
+      cost: form.cost ? Number(form.cost) : null,
+      stock_qty: form.stock_qty ? Number(form.stock_qty) : 0,
+      is_custom: form.is_custom,
+      is_available: form.is_available,
+      is_featured: form.is_featured,
+      images: form.images,
+    });
+    if (!ok) {
+      setSaving(false);
+      alert(getLastAdminDbError() ?? "Could not update product. Check admin role and RLS policies.");
+      return;
+    }
     setSaving(false);
     router.push("/admin/products");
   }

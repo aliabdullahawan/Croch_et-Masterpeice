@@ -1,39 +1,56 @@
 /* ════════════════════════════════════════════════════════════════
    app/profile/page.tsx  —  User Profile Page
-   Shows: logged-in user's name, email, avatar, order history,
-   wishlist count. If logged out: "Please sign in" prompt.
-   TODO: Replace with Supabase Auth + profiles table.
+   Shows the signed-in user's profile, notifications, and recent orders.
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import Link                            from "next/link";
 import { useNotifications }            from "@/context/NotificationContext";
-import { getUserNotifications, markAllUserNotificationsRead } from "@/lib/order-store";
+import { useAuth }                     from "@/context/AuthContext";
+import { fetchUserNotifications, fetchUserOrders, type AdminNotificationItem, type UserOrderSummary } from "@/lib/db-client";
 import {
   User, Mail, Phone, MapPin, Camera, ShoppingBag,
   Heart, Bell, BellOff, LogIn, Package, Clock,
 } from "lucide-react";
 
-/* If AuthContext is available, swap this with `useAuth()` */
-function useMockAuth() {
-  // TODO: Supabase Auth — const { user } = useAuth(); return { user, isLoggedIn: !!user }
-  return { isLoggedIn: false, user: null as null | { name: string; email: string; avatar?: string } };
-}
-
 export default function UserProfilePage() {
-  const { isLoggedIn, user } = useMockAuth();
-  const { addToast }         = useNotifications();
-  const fileRef              = useRef<HTMLInputElement>(null);
-  const [notifs,   setNotifs]   = useState<ReturnType<typeof getUserNotifications>>([]);
+  const { user, loading } = useAuth();
+  const isLoggedIn = Boolean(user);
+  const { addToast } = useNotifications();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [notifs, setNotifs] = useState<AdminNotificationItem[]>([]);
+  const [recentOrders, setRecentOrders] = useState<UserOrderSummary[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
   const unread = notifs.filter(n => !n.read).length;
 
-  useEffect(() => { setNotifs(getUserNotifications()); }, []);
+  useEffect(() => {
+    if (!user?.id) {
+      setNotifs([]);
+      setRecentOrders([]);
+      return;
+    }
+
+    void (async () => {
+      const [notificationRows, orderRows] = await Promise.all([
+        fetchUserNotifications(user.id),
+        fetchUserOrders(user.id),
+      ]);
+      setNotifs(notificationRows);
+      setRecentOrders(orderRows.slice(0, 5));
+    })();
+  }, [user?.id]);
 
   function markRead() {
-    markAllUserNotificationsRead();
     setNotifs(n => n.map(x => ({ ...x, read: true })));
+  }
+
+  function formatPKR(value: number): string {
+    return `Rs ${Math.round(value).toLocaleString("en-PK")}`;
+  }
+
+  if (loading) {
+    return <div className="min-h-screen" />;
   }
 
   if (!isLoggedIn) {
@@ -51,7 +68,7 @@ export default function UserProfilePage() {
             <Link href="/auth/login" className="btn-gold flex items-center justify-center gap-2">
               <LogIn size={16} /> Sign In
             </Link>
-            <Link href="/auth/register" className="btn-outline text-sm">
+            <Link href="/auth/signup" className="btn-outline text-sm">
               Create Account
             </Link>
           </div>
@@ -71,7 +88,11 @@ export default function UserProfilePage() {
             <div className="relative">
               <div className="w-20 h-20 rounded-2xl overflow-hidden bg-brand-gold/10 border-2 border-brand-gold/20 flex items-center justify-center">
                 {user?.avatar
-                  ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                  ? (
+                    // Avatar source can be data URL or arbitrary remote URL from auth metadata.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                  )
                   : <User size={28} className="text-brand-gold" />
                 }
               </div>
@@ -143,14 +164,31 @@ export default function UserProfilePage() {
         {/* Recent Activity */}
         <div className="glass-card p-5">
           <h2 className="font-display text-base text-brand-cream mb-4">Recent Orders</h2>
-          <div className="text-center py-8 text-brand-creamDim/40">
-            <Clock size={24} className="mx-auto mb-2" />
-            <p className="text-sm">No orders yet</p>
-            <p className="text-xs mt-1">When you place orders, they'll appear here</p>
-            <Link href="/products" className="inline-block mt-4 text-xs text-brand-gold hover:underline">
-              Browse our handcrafted collection →
-            </Link>
-          </div>
+          {recentOrders.length === 0 ? (
+            <div className="text-center py-8 text-brand-creamDim/40">
+              <Clock size={24} className="mx-auto mb-2" />
+              <p className="text-sm">No orders yet</p>
+              <p className="text-xs mt-1">When you place orders, they will appear here</p>
+              <Link href="/products" className="inline-block mt-4 text-xs text-brand-gold hover:underline">
+                Browse our handcrafted collection →
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="rounded-xl border border-brand-cream/10 p-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-brand-cream font-semibold">#{order.id.slice(0, 8)}</p>
+                    <p className="text-xs text-brand-creamDim/60">{new Date(order.created_at).toLocaleDateString("en-PK")}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-brand-creamDim/70">{order.status.replace("_", " ")}</p>
+                    <p className="text-sm text-brand-gold font-semibold">{formatPKR(order.total_amount)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>

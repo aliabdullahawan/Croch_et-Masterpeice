@@ -7,16 +7,27 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useState, useMemo }    from "react";
+import { useState, useMemo, useEffect }    from "react";
 import Link                     from "next/link";
 import { XCircle, RotateCcw, Search, ChevronLeft, CalendarDays, Package } from "lucide-react";
 import PageTransition, { StaggerItem } from "@/components/ui/PageTransition";
-import { getMockOrders, formatPKR, getOrderStatusColor } from "@/lib/admin-mock-data";
+import { fetchAdminOrders, updateOrderStatus } from "@/lib/db-client";
 import type { Order } from "@/lib/admin-types";
 
 export default function CancelledOrdersPage() {
-  const [allOrders, setAllOrders] = useState<Order[]>(() => getMockOrders());
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [search,    setSearch]    = useState("");
+
+  useEffect(() => {
+    void (async () => {
+      const orders = await fetchAdminOrders();
+      setAllOrders(orders);
+    })();
+  }, []);
+
+  function formatPKR(value: number): string {
+    return `Rs ${Math.round(value).toLocaleString("en-PK")}`;
+  }
 
   const cancelled = useMemo(() =>
     allOrders.filter(o => o.status === "cancelled" &&
@@ -25,9 +36,10 @@ export default function CancelledOrdersPage() {
     [allOrders, search]
   );
 
-  function restore(id: string) {
-    /* TODO: Supabase — await supabase.from('orders').update({ status: 'pending' }).eq('id', id) */
-    setAllOrders(prev => prev.map(o => o.id === id ? { ...o, status: "pending" as const } : o));
+  async function restore(id: string) {
+    await updateOrderStatus(id, "pending");
+    const orders = await fetchAdminOrders();
+    setAllOrders(orders);
   }
 
   return (
@@ -86,7 +98,7 @@ export default function CancelledOrdersPage() {
                   <div className="text-right flex-shrink-0">
                     <p className="font-semibold text-[#C9A028] text-sm">{formatPKR(order.total_amount)}</p>
                     <button
-                      onClick={() => restore(order.id)}
+                      onClick={() => { void restore(order.id); }}
                       className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgba(201,160,40,0.1)] text-[#C9A028] text-xs hover:bg-[rgba(201,160,40,0.2)] transition"
                     >
                       <RotateCcw size={11} /> Restore

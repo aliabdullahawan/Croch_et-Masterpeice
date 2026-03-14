@@ -9,10 +9,10 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useState, useMemo }  from "react";
+import { useState, useMemo, useEffect }  from "react";
 import AdminTopbar             from "@/components/admin/AdminTopbar";
 import { useAdmin }            from "@/context/AdminContext";
-import { getMockProducts, getMockCategories, formatPKR } from "@/lib/admin-mock-data";
+import { fetchAdminProducts, fetchAdminCategories, deleteAdminProduct, getLastAdminDbError } from "@/lib/db-client";
 import type { AdminProduct }   from "@/lib/admin-types";
 import {
   Search, Plus, Edit2, Trash2, Filter,
@@ -30,11 +30,25 @@ export default function ProductsPage() {
   const [selected,       setSelected]    = useState<Set<string>>(new Set());
   const [deleteId,       setDeleteId]    = useState<string | null>(null);
 
-  /* ── Load data
-   * TODO: Supabase — const { data } = await supabase.from('products').select('*, category:categories(*)')
-   */
-  const products   = useMemo(() => getMockProducts(), []);
-  const categories = useMemo(() => getMockCategories(), []);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; product_count: number }>>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const [productRows, categoryRows] = await Promise.all([
+        fetchAdminProducts(),
+        fetchAdminCategories(),
+      ]);
+      setProducts(productRows);
+      setCategories(categoryRows);
+      setLoadError(getLastAdminDbError());
+    })();
+  }, []);
+
+  function formatPKR(amount: number): string {
+    return `Rs ${Math.round(amount).toLocaleString("en-PK")}`;
+  }
 
   /* ── Filtered product list ─────────────────────────────────── */
   const filtered = useMemo(() => {
@@ -57,7 +71,12 @@ export default function ProductsPage() {
   /* ── Mock delete handler
    * TODO: Supabase — await supabase.from('products').delete().eq('id', deleteId)
    */
-  function handleDelete(id: string) { setDeleteId(null); /* no-op with mock data */ }
+  async function handleDelete(id: string) {
+    await deleteAdminProduct(id);
+    const productRows = await fetchAdminProducts();
+    setProducts(productRows);
+    setDeleteId(null);
+  }
 
   /* ── Margin calculation ──────────────────────────────────────── */
   function getMargin(p: AdminProduct): string {
@@ -83,6 +102,12 @@ export default function ProductsPage() {
       />
 
       <div className="p-4 md:p-6 space-y-4">
+
+        {loadError && (
+          <div className="px-4 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+            {loadError}
+          </div>
+        )}
 
         {/* ── Filters row ──────────────────────────────────────── */}
         <div className="flex flex-wrap gap-3">

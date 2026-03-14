@@ -15,11 +15,16 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
+const db = supabase as any;
+const ADMIN_EMAIL_ALLOWLIST = ["aliabdullahawan.2003@gmail.com"];
 
 export interface AuthUser {
   id:        string;
   email?:    string;
   name?:     string;
+  avatar?:   string;
   provider?: "email" | "google";
 }
 
@@ -50,80 +55,250 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user,      setUser]      = useState<AuthUser | null>(null);
   const [adminUser, setAdminUser] = useState<AuthUser | null>(null);
-  const [loading,   setLoading]   = useState(false);
+  const [loading,   setLoading]   = useState(true);
+
+  const mapSupabaseUser = (authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }): AuthUser => {
+    const fullName = typeof authUser.user_metadata?.full_name === "string"
+      ? authUser.user_metadata.full_name
+      : undefined;
+    const avatar = typeof authUser.user_metadata?.avatar_url === "string"
+      ? authUser.user_metadata.avatar_url
+      : (typeof authUser.user_metadata?.picture === "string" ? authUser.user_metadata.picture : undefined);
+    return {
+      id: authUser.id,
+      email: authUser.email ?? undefined,
+      name: fullName,
+      avatar,
+      provider: "email",
+    };
+  };
+
+  const ensureProfile = async (uid: string, fullName?: string) => {
+    await db
+      .from("profiles")
+      .upsert({
+        id: uid,
+        full_name: fullName ?? null,
+      }, { onConflict: "id" });
+  };
+
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const getProfileRole = async (uid: string): Promise<{ role: string | null; full_name: string | null } | null> => {
+    // Retry because auth session propagation can lag immediately after password sign-in.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, full_name")
+        .eq("id", uid)
+        .maybeSingle();
+
+      if (!error) {
+        const row = data as { role?: string | null; full_name?: string | null } | null;
+        return {
+          role: row?.role ?? null,
+          full_name: row?.full_name ?? null,
+        };
+      }
+
+      await sleep(250);
+    }
+
+    return null;
+  };
+
+  const hasAdminRole = async (uid: string, email?: string | null): Promise<boolean> => {
+    const { data: adminFlag, error: adminError } = await db.rpc("is_admin", { uid });
+    if (!adminError && adminFlag === true) {
+      return true;
+    }
+
+    // Fallback for projects where RPC execute privileges were not applied
+    // or where RPC returned stale/false due policy/session timing.
+    const profile = await getProfileRole(uid);
+    if (!profile) {
+      return Boolean(email && ADMIN_EMAIL_ALLOWLIST.includes(email.toLowerCase().trim()));
+    }
+
+    return profile.role === "admin" || Boolean(email && ADMIN_EMAIL_ALLOWLIST.includes(email.toLowerCase().trim()));
+  };
+
+  const loadAdminRole = async (uid: string, email?: string | null) => {
+    await ensureProfile(uid);
+
+    const isAdmin = await hasAdminRole(uid, email);
+    if (!isAdmin) {
+      setAdminUser(null);
+      localStorage.removeItem("cm_admin");
+      return;
+    }
+
+    const profile = await getProfileRole(uid);
+
+    const admin: AuthUser = {
+      id: uid,
+      name: profile?.full_name ?? "Admin",
+      provider: "email",
+    };
+    setAdminUser(admin);
+    localStorage.setItem("cm_admin", JSON.stringify(admin));
+  };
 
   /* ── Restore sessions on mount ─────────────────────────── */
   useEffect(() => {
-    // User session: check localStorage first, then sessionStorage
-    const storedUser =
-      localStorage.getItem("cm_user") ||
-      sessionStorage.getItem("cm_user");
-    if (storedUser) {
-      try { setUser(JSON.parse(storedUser)); } catch {}
-    }
-    // Admin session
-    const storedAdmin = localStorage.getItem("cm_admin");
-    if (storedAdmin) {
-      try { setAdminUser(JSON.parse(storedAdmin)); } catch {}
-    }
-    setLoading(false);
+    let mounted = true;
+
+    const bootstrap = async () => {
+      const { data } = await supabase.auth.getSession();
+      const sessionUser = data.session?.user;
+
+      if (!mounted) {
+        return;
+      }
+
+      if (sessionUser) {
+        const mapped = mapSupabaseUser(sessionUser);
+        setUser(mapped);
+        localStorage.setItem("cm_user", JSON.stringify(mapped));
+        await loadAdminRole(sessionUser.id, sessionUser.email ?? null);
+      } else {
+        setUser(null);
+        setAdminUser(null);
+        localStorage.removeItem("cm_user");
+        sessionStorage.removeItem("cm_user");
+        localStorage.removeItem("cm_admin");
+      }
+
+      if (mounted) {
+        setLoading(false);
+      }
+    };
+
+    void bootstrap();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const authUser = session?.user;
+      if (!authUser) {
+        setUser(null);
+        setAdminUser(null);
+        localStorage.removeItem("cm_user");
+        sessionStorage.removeItem("cm_user");
+        localStorage.removeItem("cm_admin");
+        return;
+      }
+
+      const mapped = mapSupabaseUser(authUser);
+      setUser(mapped);
+      localStorage.setItem("cm_user", JSON.stringify(mapped));
+      void loadAdminRole(authUser.id, authUser.email ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   /* ── User Sign In ──────────────────────────────────────── */
-  const signIn = async (email: string, _password: string, rememberMe = false) => {
-    /* TODO: Supabase → const { error } = await supabase.auth.signInWithPassword({ email, password }); */
-    await new Promise(r => setTimeout(r, 700));
-    const u: AuthUser = { id: "mock-user-" + Date.now(), email, provider: "email" };
-    const store = rememberMe ? localStorage : sessionStorage;
-    store.setItem("cm_user", JSON.stringify(u));
-    setUser(u);
+  const signIn = async (email: string, password: string, _rememberMe = false) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    if (!data.user) throw new Error("Login failed. Please try again.");
+
+    await ensureProfile(data.user.id, typeof data.user.user_metadata?.full_name === "string" ? data.user.user_metadata.full_name : undefined);
+
+    const mapped = mapSupabaseUser(data.user);
+    setUser(mapped);
+    localStorage.setItem("cm_user", JSON.stringify(mapped));
+    await loadAdminRole(data.user.id, data.user.email ?? null);
   };
 
   /* ── User Sign Up ──────────────────────────────────────── */
-  const signUp = async (email: string, _password: string, name?: string) => {
-    /* TODO: Supabase → supabase.auth.signUp({ email, password, options: { data: { full_name: name } } }) */
-    await new Promise(r => setTimeout(r, 700));
-    const u: AuthUser = { id: "mock-user-" + Date.now(), email, name, provider: "email" };
-    localStorage.setItem("cm_user", JSON.stringify(u));
-    setUser(u);
+  const signUp = async (email: string, password: string, name?: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name ?? "" },
+      },
+    });
+
+    if (error) throw error;
+    if (!data.user) throw new Error("Sign up failed. Please try again.");
+
+    await ensureProfile(data.user.id, name);
+
+    if (data.session?.user) {
+      const mapped = mapSupabaseUser(data.session.user);
+      setUser(mapped);
+      localStorage.setItem("cm_user", JSON.stringify(mapped));
+      await loadAdminRole(data.session.user.id, data.session.user.email ?? null);
+    }
   };
 
   /* ── Google Sign In (mock) ─────────────────────────────── */
   const signInWithGoogle = async () => {
-    /* TODO: Supabase → supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }) */
-    await new Promise(r => setTimeout(r, 800));
-    const u: AuthUser = {
-      id:       "google-user-" + Date.now(),
-      email:    "user@gmail.com",
-      name:     "Google User",
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-    };
-    localStorage.setItem("cm_user", JSON.stringify(u));
-    setUser(u);
+      options: { redirectTo: `${window.location.origin}/auth/login` },
+    });
+    if (error) throw error;
   };
 
   /* ── User Sign Out ─────────────────────────────────────── */
   const signOut = async () => {
-    /* TODO: Supabase → supabase.auth.signOut() */
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
     localStorage.removeItem("cm_user");
     sessionStorage.removeItem("cm_user");
+    localStorage.removeItem("cm_admin");
     setUser(null);
+    setAdminUser(null);
   };
 
   /* ── Admin Sign In ─────────────────────────────────────── */
-  const adminSignIn = async (email: string, _password: string) => {
-    /* TODO: Supabase → verify role === 'admin' after sign in */
-    await new Promise(r => setTimeout(r, 700));
-    const a: AuthUser = { id: "admin-001", email, name: "Admin", provider: "email" };
-    localStorage.setItem("cm_admin", JSON.stringify(a));
-    setAdminUser(a);
+  const adminSignIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    if (!data.user) throw new Error("Login failed. Please try again.");
+
+    if (data.session) {
+      await supabase.auth.setSession(data.session);
+    }
+
+    await ensureProfile(data.user.id, typeof data.user.user_metadata?.full_name === "string" ? data.user.user_metadata.full_name : undefined);
+
+    const isAdmin = await hasAdminRole(data.user.id, data.user.email ?? null);
+    if (!isAdmin) {
+      await supabase.auth.signOut();
+      throw new Error("Access denied. This account is not marked as admin in profiles.");
+    }
+
+    const profile = await getProfileRole(data.user.id);
+
+    const mapped = mapSupabaseUser(data.user);
+    setUser(mapped);
+    localStorage.setItem("cm_user", JSON.stringify(mapped));
+
+    const admin: AuthUser = {
+      id: data.user.id,
+      email: data.user.email ?? undefined,
+      name: profile?.full_name ?? "Admin",
+      provider: "email",
+    };
+    setAdminUser(admin);
+    localStorage.setItem("cm_admin", JSON.stringify(admin));
   };
 
   /* ── Admin Sign Out ────────────────────────────────────── */
   const adminSignOut = async () => {
-    /* TODO: Supabase → supabase.auth.signOut() */
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
     localStorage.removeItem("cm_admin");
+    localStorage.removeItem("cm_user");
+    sessionStorage.removeItem("cm_user");
     setAdminUser(null);
+    setUser(null);
   };
 
   return (

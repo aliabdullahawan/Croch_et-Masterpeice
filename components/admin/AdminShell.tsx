@@ -8,7 +8,9 @@
 
 import { useAdmin }         from "@/context/AdminContext";
 import { useTheme }         from "@/context/ThemeContext";
-import { usePathname }      from "next/navigation";
+import { useAuth }          from "@/context/AuthContext";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import AdminSidebar         from "./AdminSidebar";
 import AdminNavbar          from "./AdminNavbar";
 import NotificationToast    from "@/components/ui/NotificationToast";
@@ -17,8 +19,26 @@ import LoadingScreen        from "@/components/ui/loading-screen";
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, sidebarCollapsed } = useAdmin();
   const { theme } = useTheme();
+  const { adminUser, loading } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const isDark = theme === "dark";
+
+  const isAuthPage = pathname === "/admin/login" || pathname === "/admin/forgot-password";
+
+  useEffect(() => {
+    if (!loading && !isAuthPage && !adminUser) {
+      router.replace("/admin/login");
+    }
+  }, [loading, isAuthPage, adminUser, router]);
+
+  if (!isAuthPage && loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthPage && !adminUser) {
+    return null;
+  }
 
   return (
     <div
@@ -29,7 +49,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           : "linear-gradient(135deg, var(--bg-base) 0%, var(--bg-deep) 100%)",
       }}
     >
-      <LoadingScreen />
       {/* Sidebar — mobile: overlay, desktop: static, GSAP-animated width */}
       <AdminSidebar />
 

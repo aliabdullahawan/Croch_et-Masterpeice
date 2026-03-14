@@ -7,7 +7,7 @@
 import { useState }        from "react";
 import Image               from "next/image";
 import Link                from "next/link";
-import { notFound }        from "next/navigation";
+import { useParams }        from "next/navigation";
 import {
   ShoppingBag, Heart, MessageCircle, Star, ArrowLeft,
   Sparkles, Check, Send, User, ShoppingCart, Zap,
@@ -15,10 +15,11 @@ import {
 import { useCart }         from "@/context/CartContext";
 import { useWishlist }     from "@/context/WishlistContext";
 import { useTheme }        from "@/context/ThemeContext";
+import { useAuth }         from "@/context/AuthContext";
+import { fetchProductBySlug, fetchProducts, fetchApprovedReviews, submitReview } from "@/lib/db-client";
+import type { Product, Review } from "@/lib/types";
 import ProductCard         from "@/components/ProductCard";
-import { MOCK_PRODUCTS, MOCK_REVIEWS } from "@/data/products";
-
-interface Props { params: { id: string } }
+import { useEffect } from "react";
 
 interface LocalReview {
   id: string; name: string; rating: number; body: string; date: string;
@@ -26,28 +27,19 @@ interface LocalReview {
 
 const STAR_LABELS = ["Poor", "Fair", "Good", "Great", "Excellent"];
 
-export default function ProductDetailPage({ params }: Props) {
-  const product = MOCK_PRODUCTS.find(p => p.slug === params.id);
-  if (!product) notFound();
+export default function ProductDetailPage() {
+  const params = useParams<{ id: string }>();
+  const slug = params?.id;
 
-  const related     = MOCK_PRODUCTS.filter(p => p.id !== product.id && p.category_id === product.category_id).slice(0, 3);
-  const seedReviews = MOCK_REVIEWS.filter(r => r.product_id === product.id);
-  const avgRating   = seedReviews.length > 0
-    ? Math.round(seedReviews.reduce((s, r) => s + r.rating, 0) / seedReviews.length)
-    : 5;
+  const [product, setProduct] = useState<Product | null>(null);
+  const [related, setRelated] = useState<Product[]>([]);
+  const [seedReviews, setSeedReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const { addItem, isInCart } = useCart();
   const { toggle, isInList }  = useWishlist();
+  const { user } = useAuth();
   const { theme } = useTheme();
-  const isDark = theme === "dark";
-
-  const tBaseBg     = isDark ? "#1A0D06" : "#FDF8F3";
-  const tCardBg     = isDark ? "rgba(42,22,10,0.9)" : "rgba(255,248,243,0.9)";
-  const tTextMain   = isDark ? "#F2E9DE" : "#3D2B1F";
-  const tTextDim    = isDark ? "#C8B89A" : "#7A5A48";
-  const tTextMuted  = isDark ? "rgba(200,184,154,0.7)" : "rgba(122,90,72,0.6)";
-  const tBorder     = isDark ? "rgba(201,160,40,0.15)" : "rgba(61,43,31,0.12)";
-  const tInputBg    = isDark ? "rgba(42,22,10,0.8)" : "rgba(255,248,243,0.9)";
 
   const [activeImage,  setActiveImage]  = useState(0);
   const [qty,          setQty]          = useState(1);
@@ -61,6 +53,63 @@ export default function ProductDetailPage({ params }: Props) {
   const [reviewBody,   setReviewBody]   = useState("");
   const [hoverRating,  setHoverRating]  = useState(0);
   const [reviewSent,   setReviewSent]   = useState(false);
+  const [reviewError,  setReviewError]  = useState<string | null>(null);
+
+  useEffect(() => {
+      if (!slug) {
+        return;
+      }
+
+      void (async () => {
+        setLoading(true);
+        const current = await fetchProductBySlug(slug);
+        if (!current) {
+          setProduct(null);
+          setLoading(false);
+          return;
+        }
+
+        const [allProducts, reviews] = await Promise.all([
+          fetchProducts(),
+          fetchApprovedReviews(current.id),
+        ]);
+
+        setProduct(current);
+        setSeedReviews(reviews);
+        setRelated(allProducts.filter((p) => p.id !== current.id && p.category_id === current.category_id).slice(0, 3));
+        setLoading(false);
+      })();
+  }, [slug]);
+
+  const isDark = theme === "dark";
+
+  const tBaseBg     = isDark ? "#1A0D06" : "#FDF8F3";
+  const tCardBg     = isDark ? "rgba(42,22,10,0.9)" : "rgba(255,248,243,0.9)";
+  const tTextMain   = isDark ? "#F2E9DE" : "#3D2B1F";
+  const tTextDim    = isDark ? "#C8B89A" : "#7A5A48";
+  const tTextMuted  = isDark ? "rgba(200,184,154,0.7)" : "rgba(122,90,72,0.6)";
+  const tBorder     = isDark ? "rgba(201,160,40,0.15)" : "rgba(61,43,31,0.12)";
+  const tInputBg    = isDark ? "rgba(42,22,10,0.8)" : "rgba(255,248,243,0.9)";
+
+  if (loading || !product) {
+    if (loading) {
+      return <div className="min-h-screen" />;
+    }
+
+    return (
+      <div className="pt-24 pb-16 min-h-screen bg-brand-base">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h1 className="font-display text-3xl text-brand-cream mb-3">Product not found</h1>
+          <p className="font-body text-sm text-brand-creamDim/70 mb-6">This product is missing, unavailable, or the link is outdated.</p>
+          <Link href="/products" className="btn-gold inline-flex items-center justify-center">Back to shop</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const avgRating   = seedReviews.length > 0
+    ? Math.round(seedReviews.reduce((s, r) => s + r.rating, 0) / seedReviews.length)
+    : 0;
 
   const inCart     = isInCart(product.id);
   const inWishlist = isInList(product.id);
@@ -71,14 +120,32 @@ export default function ProductDetailPage({ params }: Props) {
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const submitReview = (e: React.FormEvent) => {
+  const submitReviewForm = async (e: React.FormEvent) => {
     e.preventDefault();
+    setReviewError(null);
     if (!reviewName.trim() || !reviewBody.trim()) return;
-    setLocalReviews(prev => [{
-      id: `lr-${Date.now()}`, name: reviewName.trim(), rating: reviewRating,
+
+    if (!user?.id) {
+      setReviewError("Please sign in first to post a review.");
+      return;
+    }
+
+    const result = await submitReview({
+      productId: product.id,
+      userId: user.id,
+      rating: reviewRating,
       body: reviewBody.trim(),
-      date: new Date().toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }),
-    }, ...prev]);
+    });
+
+    if (!result.ok) {
+      setReviewError(result.message ?? "Could not post review. Please try again.");
+      return;
+    }
+
+    const latest = await fetchApprovedReviews(product.id);
+    setSeedReviews(latest);
+    setLocalReviews([]);
+
     setReviewName(""); setReviewBody(""); setReviewRating(5);
     setReviewSent(true);
     setTimeout(() => setReviewSent(false), 3000);
@@ -86,7 +153,7 @@ export default function ProductDetailPage({ params }: Props) {
 
   const allReviews = [...localReviews, ...seedReviews.map(r => ({
     id: r.id, name: r.profile?.full_name ?? "Anonymous",
-    rating: r.rating, body: r.body, date: "Verified Purchase",
+    rating: r.rating, body: r.body ?? "", date: "Verified Purchase",
   }))];
 
   /* ── WhatsApp messages ── */
@@ -338,11 +405,17 @@ export default function ProductDetailPage({ params }: Props) {
 
               {reviewSent && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl mb-4 font-body text-sm" style={{ background: "rgba(107,191,191,0.15)", border: "1px solid rgba(107,191,191,0.3)", color: "#4AAAA0" }}>
-                  <Check size={15} /> Thank you! Your review has been added.
+                  <Check size={15} /> Thank you! Your review has been posted.
                 </div>
               )}
 
-              <form onSubmit={submitReview} className="space-y-4">
+              {reviewError && (
+                <div className="px-4 py-3 rounded-xl mb-4 font-body text-sm" style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.25)", color: "#dc2626" }}>
+                  {reviewError}
+                </div>
+              )}
+
+              <form onSubmit={submitReviewForm} className="space-y-4">
                 <div>
                   <label className="block font-body text-xs mb-1.5" style={{ color: tTextMuted }}>Your Name <span style={{ color: "#E8A0A8" }}>*</span></label>
                   <input type="text" required value={reviewName} onChange={e => setReviewName(e.target.value)} placeholder="e.g. Ayesha R." className="w-full rounded-xl px-4 py-3 font-body transition-all duration-300 outline-none bg-white/90 border border-[#3D2B1F]/15 text-[#3D2B1F] focus:border-[#C9A028]/60 focus:bg-white focus:shadow-[0_0_0_3px_rgba(201,160,40,0.12)] placeholder:text-[#7A5A48]/60" />

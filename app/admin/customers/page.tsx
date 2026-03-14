@@ -8,10 +8,10 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useState, useMemo }         from "react";
+import { useState, useMemo, useEffect }         from "react";
 import AdminTopbar                    from "@/components/admin/AdminTopbar";
 import { useAdmin }                   from "@/context/AdminContext";
-import { getMockCustomers, getMockOrders, formatPKR } from "@/lib/admin-mock-data";
+import { fetchAdminCustomers, fetchAdminOrders } from "@/lib/db-client";
 import type { AdminCustomer }        from "@/lib/admin-types";
 import { Search, X, Users, User }    from "lucide-react";
 
@@ -26,8 +26,23 @@ export default function CustomersPage() {
    *   .eq('role', 'customer')
    *   .order('created_at', { ascending: false })
    */
-  const customers = useMemo(() => getMockCustomers(), []);
-  const allOrders = useMemo(() => getMockOrders(), []);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
+  const [allOrders, setAllOrders] = useState<Array<{ customer_id: string | null; id: string; total_amount: number; status: string; created_at: string }>>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const [customerRows, orderRows] = await Promise.all([
+        fetchAdminCustomers(),
+        fetchAdminOrders(),
+      ]);
+      setCustomers(customerRows);
+      setAllOrders(orderRows);
+    })();
+  }, []);
+
+  function formatPKR(amount: number): string {
+    return `Rs ${Math.round(amount).toLocaleString("en-PK")}`;
+  }
 
   /* ── UI state ─────────────────────────────────────────────── */
   const [search,   setSearch]   = useState("");
@@ -98,7 +113,11 @@ export default function CustomersPage() {
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
                           {c.avatar_url
-                            ? <img src={c.avatar_url} alt={c.full_name ?? ""} className="w-full h-full rounded-full object-cover" />
+                            ? (
+                              // Avatar URL may be external and not covered by static next/image host config.
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={c.avatar_url} alt={c.full_name ?? ""} className="w-full h-full rounded-full object-cover" />
+                            )
                             : <User size={14} className="text-brand-gold" />
                           }
                         </div>

@@ -10,22 +10,25 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useMemo, useEffect, useState }  from "react";
+import { useEffect, useState }  from "react";
 import { motion }                         from "framer-motion";
 import InteractiveGlobe                   from "@/components/ui/interactive-globe";
 import PageTransition, { StaggerItem }    from "@/components/ui/PageTransition";
-import {
-  getMockOrders, getMockDashboardMetrics,
-  getOrderStatusColor, formatPKR,
-}                                         from "@/lib/admin-mock-data";
-import type { Order }                     from "@/lib/admin-types";
+import { fetchAdminDashboardData }        from "@/lib/db-client";
+import type { DashboardMetric, Order }    from "@/lib/admin-types";
 import { useTheme }           from "@/context/ThemeContext";
 import {
   ShoppingBag, TrendingUp, Users, Clock,
   Package, MessageCircle, ArrowRight,
-  CheckCircle2, Truck, Loader2,
 } from "lucide-react";
-import { getCustomOrders, getCartOrders, type CustomOrder } from "@/lib/order-store";
+
+interface DashboardCustomOrder {
+  id: string;
+  customer_name: string;
+  customer_phone: string;
+  category: string | null;
+  status: string;
+}
 
 /* ── Metric icon map ─────────────────────────────────────────── */
 const METRIC_ICONS: Record<string, React.ReactNode> = {
@@ -63,20 +66,35 @@ function StatusBadge({ status }: { status: Order["status"] }) {
 export default function AdminDashboardPage() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const metrics     = useMemo(() => getMockDashboardMetrics(), []);
-  const allOrders   = useMemo(() => getMockOrders(), []);
-  const recentOrders= useMemo(
-    () => [...allOrders].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 6),
-    [allOrders]
-  );
+  const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [customOrders, setCustomOrders] = useState<DashboardCustomOrder[]>([]);
+
+  const allOrders = recentOrders;
   const pendingCount = allOrders.filter(o => o.status === "pending").length;
 
-  const [customOrders, setCustomOrders] = useState<CustomOrder[]>([]);
-  const [cartOrderCount, setCartOrderCount] = useState(0);
+  const cartOrderCount = 0;
+
   useEffect(() => {
-    setCustomOrders(getCustomOrders().slice(0, 3));
-    setCartOrderCount(getCartOrders().length);
+    void (async () => {
+      const data = await fetchAdminDashboardData();
+      setMetrics(data.metrics);
+      setRecentOrders(data.recentOrders);
+      setCustomOrders(
+        data.customOrders.map((order) => ({
+          id: order.id,
+          customer_name: order.customer_name,
+          customer_phone: order.customer_phone,
+          category: order.category,
+          status: order.status,
+        })),
+      );
+    })();
   }, []);
+
+  function formatPKR(value: number): string {
+    return `Rs ${Math.round(value).toLocaleString("en-PK")}`;
+  }
 
   return (
     <PageTransition className="p-4 md:p-6 space-y-6 pb-16">
@@ -207,8 +225,8 @@ export default function AdminDashboardPage() {
               <div className="divide-y divide-brand-gold/5">
                 {customOrders.map(order => (
                   <div key={order.id} className="px-5 py-3">
-                    <p className="text-sm font-medium text-brand-cream">{order.name}</p>
-                    <p className="text-[10px] text-brand-creamDim/50">{order.category} · {order.phone}</p>
+                    <p className="text-sm font-medium text-brand-cream">{order.customer_name}</p>
+                    <p className="text-[10px] text-brand-creamDim/50">{order.category ?? "Uncategorized"} · {order.customer_phone}</p>
                     <span className={`text-[9px] px-2 py-0.5 rounded-full ${order.status === "new" ? "bg-amber-900/10 text-amber-500 border border-amber-500/20" : "bg-blue-900/10 text-blue-500 border border-blue-500/20"}`}>
                       {order.status}
                     </span>

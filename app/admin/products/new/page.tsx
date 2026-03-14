@@ -14,17 +14,18 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useRouter }         from "next/navigation";
 import Image                 from "next/image";
 import AdminTopbar           from "@/components/admin/AdminTopbar";
 import { useAdmin }          from "@/context/AdminContext";
-import { getMockCategories } from "@/lib/admin-mock-data";
+import { fetchAdminCategories, createAdminProduct, createAdminCategory, getLastAdminDbError } from "@/lib/db-client";
 import type { AdminCategory } from "@/lib/admin-types";
 import {
   Plus, X, Tag, Save, ChevronLeft,
   Upload, ImageIcon, AlertCircle,
 } from "lucide-react";
+import { useEffect } from "react";
 
 /* ── Shared input class ─────────────────────────────────────── */
 const INPUT = "w-full px-3 py-2.5 rounded-xl border border-[rgba(61,43,31,0.15)] bg-white text-sm font-body text-[#3D2B1F] outline-none focus:border-[#C9A028] focus:ring-2 focus:ring-[rgba(201,40,40,0.12)] transition";
@@ -68,10 +69,25 @@ export default function NewProductPage() {
   const [uploading, setUploading] = useState(false);
 
   /* ── Category state ─────────────────────────────────────────── */
-  const [categories,    setCategories]    = useState<AdminCategory[]>(() => getMockCategories());
+  const [categories,    setCategories]    = useState<AdminCategory[]>([]);
   const [showCatDialog, setShowCatDialog] = useState(false);
   const [newCat,        setNewCat]        = useState({ name: "", description: "" });
   const [catSaving,     setCatSaving]     = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      const rows = await fetchAdminCategories();
+      setCategories(rows.map((row, index) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        description: null,
+        image_url: null,
+        sort_order: index + 1,
+        product_count: row.product_count,
+      })));
+    })();
+  }, []);
 
   /* ── Derived margin ─────────────────────────────────────────── */
   const margin = useMemo(() => {
@@ -95,7 +111,7 @@ export default function NewProductPage() {
   function removeTag(t: string) { set("tags", form.tags.filter(x => x !== t)); }
 
   /* ── Image upload from computer (base64/binary) ─────────────── */
-  const handleFiles = useCallback(async (files: FileList | null) => {
+  const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
     const newImages: string[] = [];
@@ -114,7 +130,7 @@ export default function NewProductPage() {
     }
     set("images", [...form.images, ...newImages]);
     setUploading(false);
-  }, [form.images]);
+  };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files);
@@ -136,18 +152,26 @@ export default function NewProductPage() {
   async function handleAddCategory() {
     if (!newCat.name.trim()) return;
     setCatSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    const created: AdminCategory = {
-      id:            Math.max(...categories.map(c => c.id)) + 1,
-      name:          newCat.name.trim(),
-      slug:          newCat.name.trim().toLowerCase().replace(/\s+/g, "-"),
-      description:   newCat.description || null,
-      image_url:     null,
-      sort_order:    categories.length + 1,
-      product_count: 0,
-    };
-    setCategories(prev => [...prev, created]);
-    setForm(f => ({ ...f, category_id: String(created.id) }));
+    const ok = await createAdminCategory({ name: newCat.name.trim(), description: newCat.description || null });
+    if (!ok) {
+      setCatSaving(false);
+      alert(getLastAdminDbError() ?? "Could not create category. Check admin role and RLS policies.");
+      return;
+    }
+    const rows = await fetchAdminCategories();
+    setCategories(rows.map((row, index) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: null,
+      image_url: null,
+      sort_order: index + 1,
+      product_count: row.product_count,
+    })));
+    const created = rows.find((row) => row.name === newCat.name.trim());
+    if (created) {
+      setForm((f) => ({ ...f, category_id: String(created.id) }));
+    }
     setNewCat({ name: "", description: "" });
     setShowCatDialog(false);
     setCatSaving(false);
@@ -167,12 +191,24 @@ export default function NewProductPage() {
   async function handleSave() {
     if (!validate()) return;
     setSaving(true);
-    // TODO: Supabase — upload base64 images to storage bucket, then insert product
-    // For each base64 image:
-    //   const blob = await fetch(form.images[i]).then(r => r.blob());
-    //   await supabase.storage.from('product-images').upload(path, blob);
-    // Then insert product row with public URLs
-    await new Promise(r => setTimeout(r, 800));
+    const ok = await createAdminProduct({
+      category_id: form.category_id ? Number(form.category_id) : null,
+      name: form.name.trim(),
+      description: form.description,
+      sku: form.sku,
+      price: form.price ? Number(form.price) : null,
+      cost: form.cost ? Number(form.cost) : null,
+      stock_qty: form.stock_qty ? Number(form.stock_qty) : 0,
+      is_custom: form.is_custom,
+      is_available: form.is_available,
+      is_featured: form.is_featured,
+      images: form.images,
+    });
+    if (!ok) {
+      setSaving(false);
+      alert(getLastAdminDbError() ?? "Could not create product. Check admin role and RLS policies.");
+      return;
+    }
     setSaving(false);
     router.push("/admin/products");
   }

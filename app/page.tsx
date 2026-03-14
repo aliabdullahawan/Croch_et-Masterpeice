@@ -58,20 +58,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════ FEATURED CATEGORIES ══════════════ */}
-      <section className="py-14 md:py-24 max-w-7xl mx-auto px-4 sm:px-6">
-        <AnimateIn className="text-center mb-10 md:mb-14">
-          <span className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold">Browse by Type</span>
-          <h2 className="section-heading mt-3">Explore Our Collection</h2>
-          <div className="divider"/>
-          <p className="font-body text-brand-creamDim/60 max-w-lg mx-auto text-sm leading-relaxed">
-            Browse through our handcrafted categories and find the perfect piece for yourself or a loved one.
-          </p>
-        </AnimateIn>
-        <AnimateIn delay={0.15}>
-          <CategoriesAccordion />
-        </AnimateIn>
-      </section>
+      <CategoriesAccordion />
 
       {/* ════════════════════ CUSTOM ORDER CTA ════════════════════ */}
       <section className="relative py-14 md:py-24 overflow-hidden bg-brand-deep">
@@ -113,30 +100,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════ REVIEWS ════════════════════════ */}
-      <section className="relative py-14 md:py-24 overflow-hidden">
-        {/* Parallax Background Image */}
-        <div className="absolute inset-0 opacity-10 dark:opacity-20 pointer-events-none mix-blend-multiply dark:mix-blend-screen bg-brand-base dark:bg-[#1A0A05]">
-          <Image 
-            src="/images/hero-bg-3.jpg" 
-            alt="Yarn Texture Background" 
-            fill 
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-base via-transparent to-brand-base dark:from-[#1A0A05] dark:to-[#1A0A05]" />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 z-10">
-          <AnimateIn className="text-center mb-10 md:mb-16">
-            <span className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold">What They Say</span>
-            <h2 className="section-heading mt-3">Customer Reviews</h2>
-            <div className="divider"/>
-          </AnimateIn>
-          <AnimateIn delay={0.15}>
-            <ReviewsCarousel />
-          </AnimateIn>
-        </div>
-      </section>
+      <ReviewsCarousel />
 
       {/* ════════════════════ SOCIAL CTA ═════════════════════ */}
       <section className="py-14 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 text-center">

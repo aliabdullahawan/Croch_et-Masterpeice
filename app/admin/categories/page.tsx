@@ -8,10 +8,11 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import AdminTopbar            from "@/components/admin/AdminTopbar";
 import { useAdmin }           from "@/context/AdminContext";
-import { getMockCategories }  from "@/lib/admin-mock-data";
+import { fetchAdminCategories, createAdminCategory, updateAdminCategory, deleteAdminCategory, getLastAdminDbError }  from "@/lib/db-client";
 import type { AdminCategory } from "@/lib/admin-types";
 import { Plus, Edit2, Trash2, Tag, X, Save, Package } from "lucide-react";
 
@@ -19,7 +20,16 @@ const INPUT = "w-full px-3 py-2 rounded-xl border border-brand-cream/15 bg-brand
 const LABEL = "block text-xs font-semibold text-brand-creamDim mb-1.5 uppercase tracking-wide";
 
 /** Empty form state for add/edit dialog */
-const EMPTY_CAT = { name: "", description: "", image_url: "" };
+const EMPTY_CAT = { name: "", description: "", imageDataUrl: "" };
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
 
 /* ══════════════════════════════════════════════════════════════ */
 export default function CategoriesPage() {
@@ -28,7 +38,22 @@ export default function CategoriesPage() {
   /* ── Data state
    * TODO: Supabase — const { data } = await supabase.from('categories').select('*, products(count)').order('sort_order')
    */
-  const [categories, setCategories] = useState<AdminCategory[]>(() => getMockCategories());
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const rows = await fetchAdminCategories();
+      setCategories(rows.map((row, index) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        description: row.description,
+        image_url: row.image_url,
+        sort_order: index + 1,
+        product_count: row.product_count,
+      })));
+    })();
+  }, []);
 
   /* ── Dialog state ────────────────────────────────────────────── */
   type DialogMode = "add" | "edit";
@@ -46,10 +71,27 @@ export default function CategoriesPage() {
   }
   /** Open edit dialog pre-filled */
   function openEdit(cat: AdminCategory) {
-    setFormData({ name: cat.name, description: cat.description ?? "", image_url: cat.image_url ?? "" });
+    setFormData({ name: cat.name, description: cat.description ?? "", imageDataUrl: cat.image_url ?? "" });
     setDialog({ open: true, mode: "edit", target: cat });
   }
   function closeDialog() { setDialog((d) => ({ ...d, open: false })); }
+
+  async function handleImageChange(file: File | null) {
+    if (!file) {
+      setFormData((f) => ({ ...f, imageDataUrl: "" }));
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Category image must be under 5 MB.");
+      return;
+    }
+    const dataUrl = await fileToBase64(file);
+    setFormData((f) => ({ ...f, imageDataUrl: dataUrl }));
+  }
 
   /* ── Save handler (add or edit)
    * TODO: Supabase
@@ -59,28 +101,30 @@ export default function CategoriesPage() {
   async function handleSave() {
     if (!formData.name.trim()) return;
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 400));
-
+    let ok = false;
     if (dialog.mode === "add") {
-      const created: AdminCategory = {
-        id:            Math.max(...categories.map((c) => c.id), 0) + 1,
-        name:          formData.name.trim(),
-        slug:          formData.name.trim().toLowerCase().replace(/\s+/g, "-"),
-        description:   formData.description || null,
-        image_url:     formData.image_url || null,
-        sort_order:    categories.length + 1,
-        product_count: 0,
-      };
-      setCategories((p) => [...p, created]);
+      ok = await createAdminCategory({ name: formData.name.trim(), description: formData.description || null, imageDataUrl: formData.imageDataUrl || null });
     } else if (dialog.target) {
-      setCategories((p) =>
-        p.map((c) =>
-          c.id === dialog.target!.id
-            ? { ...c, name: formData.name.trim(), description: formData.description || null, image_url: formData.image_url || null }
-            : c
-        )
-      );
+      ok = await updateAdminCategory(dialog.target.id, { name: formData.name.trim(), description: formData.description || null, imageDataUrl: formData.imageDataUrl || null });
     }
+
+    if (!ok) {
+      setSaving(false);
+      alert(getLastAdminDbError() ?? "Could not save category. Check admin role and RLS policies.");
+      return;
+    }
+
+    const rows = await fetchAdminCategories();
+    setCategories(rows.map((row, index) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      image_url: row.image_url,
+      sort_order: index + 1,
+      product_count: row.product_count,
+    })));
+
     setSaving(false);
     closeDialog();
   }
@@ -88,9 +132,19 @@ export default function CategoriesPage() {
   /* ── Delete handler
    * TODO: Supabase — await supabase.from('categories').delete().eq('id', deleteId)
    */
-  function handleDelete() {
+  async function handleDelete() {
     if (deleteId === null) return;
-    setCategories((p) => p.filter((c) => c.id !== deleteId));
+    await deleteAdminCategory(deleteId);
+    const rows = await fetchAdminCategories();
+    setCategories(rows.map((row, index) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      image_url: row.image_url,
+      sort_order: index + 1,
+      product_count: row.product_count,
+    })));
     setDeleteId(null);
   }
 
@@ -154,6 +208,12 @@ export default function CategoriesPage() {
                 <p className="text-xs text-[#7A5A48] mb-3 leading-relaxed">{cat.description}</p>
               )}
 
+              {cat.image_url && (
+                <div className="relative h-24 rounded-xl overflow-hidden border border-brand-gold/15 mb-3">
+                  <Image src={cat.image_url} alt={cat.name} fill className="object-cover" />
+                </div>
+              )}
+
               {/* Footer: product count */}
               <div className="flex items-center gap-1.5 text-xs text-brand-creamDim border-t border-brand-gold/10 pt-3 mt-3">
                 <Package size={12} />
@@ -211,6 +271,20 @@ export default function CategoriesPage() {
                   placeholder="Short description"
                 />
               </div>
+              <div>
+                <label className={LABEL}>Category Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className={INPUT}
+                  onChange={(e) => { void handleImageChange(e.target.files?.[0] ?? null); }}
+                />
+                {formData.imageDataUrl && (
+                  <div className="relative h-24 mt-2 rounded-xl overflow-hidden border border-brand-gold/15">
+                    <Image src={formData.imageDataUrl} alt="Category preview" fill className="object-cover" />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-3 mt-5">
@@ -239,7 +313,7 @@ export default function CategoriesPage() {
             </p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteId(null)} className="flex-1 py-2 rounded-xl border border-[rgba(61,43,31,0.15)] text-sm font-medium hover:bg-[#F5EDE4] transition">Cancel</button>
-              <button onClick={handleDelete} className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition">Delete</button>
+              <button onClick={() => { void handleDelete(); }} className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition">Delete</button>
             </div>
           </div>
         </div>

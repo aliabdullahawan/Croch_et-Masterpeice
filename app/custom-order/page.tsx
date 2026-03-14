@@ -8,7 +8,7 @@
 import { useState, useRef, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { saveCustomOrder } from "@/lib/order-store";
+import { createCustomOrder } from "@/lib/db-client";
 import AnimateIn, { AnimateInGroup } from "@/components/ui/AnimateIn";
 import {
   Sparkles,
@@ -97,20 +97,18 @@ export default function CustomOrderPage() {
     });
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    /* ── Save to localStorage → visible in /admin/orders/custom ── */
-    saveCustomOrder({
-      type:        "custom",
-      name:        form.name,
-      phone:       form.phone,
-      email:       form.email || undefined,
-      category:    form.category,
+    await createCustomOrder({
+      customer_name: form.name,
+      customer_phone: form.phone,
+      customer_email: form.email || undefined,
+      category: form.category,
       description: form.description,
-      budget:      form.budget || undefined,
-      deadline:    form.deadline || undefined,
-      imageNames:  imageNames.length > 0 ? imageNames : undefined,
+      budget_text: form.budget || undefined,
+      deadline_text: form.deadline || undefined,
+      images,
     });
 
     /* ── Open WhatsApp with pre-filled message ── */

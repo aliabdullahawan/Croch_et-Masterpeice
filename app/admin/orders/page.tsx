@@ -6,9 +6,9 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useState, useMemo }    from "react";
+import { useState, useMemo, useEffect }    from "react";
 import Link                     from "next/link";
-import { getMockOrders, getOrderStatusColor, formatPKR } from "@/lib/admin-mock-data";
+import { fetchAdminOrders, updateOrderStatus as updateOrderStatusInDb } from "@/lib/db-client";
 import type { Order, OrderStatus } from "@/lib/admin-types";
 import PageTransition, { StaggerItem } from "@/components/ui/PageTransition";
 import { useNotifications } from "@/context/NotificationContext";
@@ -26,7 +26,7 @@ export default function OrdersPage() {
   const { theme }    = useTheme();
   const isDark       = theme === "dark";
 
-  const [allOrders,    setAllOrders]    = useState<Order[]>(() => getMockOrders());
+  const [allOrders,    setAllOrders]    = useState<Order[]>([]);
   const [search,       setSearch]       = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | OrderStatus>("all");
   const [selected,     setSelected]     = useState<Order | null>(null);
@@ -70,16 +70,40 @@ export default function OrdersPage() {
     [allOrders, search, statusFilter]
   );
 
-  function updateStatus(id: string, status: OrderStatus) {
-    /* TODO: Supabase → supabase.from('orders').update({ status }).eq('id', id) */
-    setAllOrders(prev => prev.map(o => o.id === id ? { ...o, status, updated_at: new Date().toISOString() } : o));
-    if (selected?.id === id) setSelected(s => s ? { ...s, status } : s);
+  useEffect(() => {
+    void (async () => {
+      const orders = await fetchAdminOrders();
+      setAllOrders(orders);
+    })();
+  }, []);
+
+  function formatPKR(value: number): string {
+    return `Rs ${Math.round(value).toLocaleString("en-PK")}`;
+  }
+
+  async function updateStatus(id: string, status: OrderStatus) {
+    const ok = await updateOrderStatusInDb(id, status);
+    if (!ok) {
+      addToast("Failed to update order status.", "error");
+      return;
+    }
+
+    const orders = await fetchAdminOrders();
+    setAllOrders(orders);
+    const updated = orders.find((order) => order.id === id) ?? null;
+    setSelected(updated);
     addToast(`Order ${id} → ${status.replace("_", " ")}`, "success");
   }
 
-  function cancelOrder(id: string) {
-    /* TODO: Supabase → supabase.from('orders').update({ status: 'cancelled' }).eq('id', id) */
-    setAllOrders(prev => prev.map(o => o.id === id ? { ...o, status: "cancelled" as OrderStatus } : o));
+  async function cancelOrder(id: string) {
+    const ok = await updateOrderStatusInDb(id, "cancelled");
+    if (!ok) {
+      addToast("Failed to cancel order.", "error");
+      return;
+    }
+
+    const orders = await fetchAdminOrders();
+    setAllOrders(orders);
     setSelected(null);
     addToast("Order cancelled and moved to Cancelled Orders", "warning");
   }
@@ -158,14 +182,14 @@ export default function OrdersPage() {
                     <div className="flex items-center gap-1.5">
                       {/* Quick status */}
                       <select value={order.status}
-                        onChange={e => { e.stopPropagation(); updateStatus(order.id, e.target.value as OrderStatus); }}
+                        onChange={e => { e.stopPropagation(); void updateStatus(order.id, e.target.value as OrderStatus); }}
                         onClick={e => e.stopPropagation()}
                         className="text-[10px] px-2 py-1 rounded-lg outline-none cursor-pointer border border-brand-gold/15 bg-brand-base/50 text-brand-creamDim">
                         {EDITABLE.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
                       </select>
                       {/* Inline cancel button */}
                       <button
-                        onClick={e => { e.stopPropagation(); cancelOrder(order.id); }}
+                        onClick={e => { e.stopPropagation(); void cancelOrder(order.id); }}
                         className="text-[10px] px-2 py-1 rounded-lg border flex items-center gap-1 transition-all"
                         style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444", borderColor: "rgba(239,68,68,0.2)" }}
                         onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.18)")}
@@ -215,7 +239,7 @@ export default function OrdersPage() {
               <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: textFaint }}>Update Status</p>
               <div className="flex flex-wrap gap-2">
                 {EDITABLE.map(s => (
-                  <button key={s} onClick={() => updateStatus(selected.id, s)}
+                  <button key={s} onClick={() => { void updateStatus(selected.id, s); }}
                     className={`text-xs px-3 py-1.5 rounded-xl border transition ${selected.status === s ? scMap[s] + " border-current" : ""}`}
                     style={selected.status !== s ? { borderColor: cardBorder, color: textFaint } : {}}
                     onMouseEnter={e => { if (selected.status !== s) e.currentTarget.style.borderColor = "rgba(201,160,40,0.3)"; }}
@@ -228,7 +252,7 @@ export default function OrdersPage() {
             </div>
 
             {/* Cancel */}
-            <button onClick={() => cancelOrder(selected.id)}
+            <button onClick={() => { void cancelOrder(selected.id); }}
               className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm transition"
               style={{ borderColor: "rgba(239,68,68,0.3)", color: "#ef4444" }}
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.1)")}

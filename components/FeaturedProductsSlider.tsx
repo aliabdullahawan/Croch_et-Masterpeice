@@ -6,10 +6,11 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { useWishlist } from "@/context/WishlistContext";
 import AnimateIn, { AnimateInGroup } from "@/components/ui/AnimateIn";
-import { MOCK_PRODUCTS } from "@/data/products";
+import { fetchProducts } from "@/lib/db-client";
+import type { Product } from "@/lib/types";
 
 export default function FeaturedProductsSlider() {
-  const products = MOCK_PRODUCTS.filter(p => p.is_featured);
+  const [products, setProducts] = useState<Product[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { toggle, isInList } = useWishlist();
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -25,6 +26,11 @@ export default function FeaturedProductsSlider() {
   };
 
   useEffect(() => {
+    void (async () => {
+      const rows = await fetchProducts({ featuredOnly: true });
+      setProducts(rows);
+    })();
+
     checkScroll();
     window.addEventListener("resize", checkScroll);
     return () => window.removeEventListener("resize", checkScroll);

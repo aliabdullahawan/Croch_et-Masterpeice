@@ -6,7 +6,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { getAdminNotifications, markAllAdminNotificationsRead } from "@/lib/order-store";
+import { fetchAdminNotifications, type AdminNotificationItem } from "@/lib/db-client";
 
 export interface Toast {
   id:      string;
@@ -19,6 +19,7 @@ interface NotificationContextValue {
   addToast:         (message: string, type?: Toast["type"]) => void;
   removeToast:      (id: string) => void;
   adminUnread:      number;
+  adminNotifications: AdminNotificationItem[];
   refreshAdminUnread: () => void;
   markAdminRead:    () => void;
 }
@@ -28,6 +29,7 @@ const NotificationContext = createContext<NotificationContextValue>({
   addToast:           () => {},
   removeToast:        () => {},
   adminUnread:        0,
+  adminNotifications: [],
   refreshAdminUnread: () => {},
   markAdminRead:      () => {},
 });
@@ -35,6 +37,7 @@ const NotificationContext = createContext<NotificationContextValue>({
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [toasts,      setToasts]      = useState<Toast[]>([]);
   const [adminUnread, setAdminUnread] = useState(0);
+  const [adminNotifications, setAdminNotifications] = useState<AdminNotificationItem[]>([]);
 
   /* ── Add toast (auto-dismiss after 5s) ─────────────────────── */
   const addToast = useCallback((message: string, type: Toast["type"] = "info") => {
@@ -49,13 +52,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   /* ── Admin unread count ────────────────────────────────────── */
   const refreshAdminUnread = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const count = getAdminNotifications().filter(n => !n.read).length;
-    setAdminUnread(count);
+    void (async () => {
+      const items = await fetchAdminNotifications();
+      setAdminNotifications(items);
+      setAdminUnread(items.length);
+    })();
   }, []);
 
   const markAdminRead = useCallback(() => {
-    markAllAdminNotificationsRead();
+    setAdminNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
     setAdminUnread(0);
   }, []);
 
@@ -67,7 +72,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [refreshAdminUnread]);
 
   return (
-    <NotificationContext.Provider value={{ toasts, addToast, removeToast, adminUnread, refreshAdminUnread, markAdminRead }}>
+    <NotificationContext.Provider value={{ toasts, addToast, removeToast, adminUnread, adminNotifications, refreshAdminUnread, markAdminRead }}>
       {children}
     </NotificationContext.Provider>
   );

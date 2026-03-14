@@ -244,16 +244,19 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 
-/* ── TO ACTIVATE: uncomment these lines and delete the mock below ─────
-const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
-──────────────────────────────────────────────────────────────────────── */
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 
-/* ── MOCK CLIENT (remove once real connection is configured) ───────── */
-export const supabase = {
-  auth:    { signUp: async () => ({}), signInWithPassword: async () => ({}), signOut: async () => ({}) },
-  from:    (_table: string) => ({ select: () => ({ data: [], error: null }) }),
-  storage: { from: (_bucket: string) => ({ upload: async () => ({}) }) },
-} as unknown as ReturnType<typeof createClient<Database>>;
+const fallbackUrl = "https://placeholder.supabase.co";
+const fallbackKey = "placeholder-anon-key";
+
+if (!isSupabaseConfigured && typeof window !== "undefined") {
+  console.error("Missing Supabase env vars. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+}
+
+export const supabase = createClient<Database>(
+  supabaseUrl ?? fallbackUrl,
+  supabaseKey ?? fallbackKey,
+);

@@ -6,11 +6,12 @@
  */
 
 "use client";
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, Suspense, useEffect } from "react";
 import Image                  from "next/image";
 import ProductCard            from "@/components/ProductCard";
 import GlowSearchBar          from "@/components/ui/animated-glowing-search-bar";
-import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/data/products";
+import { fetchProducts, fetchStoreCategories } from "@/lib/db-client";
+import type { Product } from "@/lib/types";
 import { SortAsc, Package } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import AnimateIn, { AnimateInGroup } from "@/components/ui/AnimateIn";
@@ -35,9 +36,26 @@ function ProductsPageContent() {
   const [searchQuery,    setSearchQuery]    = useState("");
   const [sortBy,         setSortBy]         = useState<SortOption>("default");
   const [showUnavailable, setShowUnavailable] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [storeCategories, setStoreCategories] = useState<Array<{ id: number; slug: string; name: string }>>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const [rows, categoryRows] = await Promise.all([
+        fetchProducts(),
+        fetchStoreCategories(),
+      ]);
+      setProducts(rows);
+      setStoreCategories(categoryRows);
+    })();
+  }, []);
+
+  const categories = useMemo(() => {
+    return [{ id: 0, slug: "all", name: "All" }, ...storeCategories];
+  }, [storeCategories]);
 
   const filtered = useMemo(() => {
-    let result = [...MOCK_PRODUCTS];
+    let result = [...products];
 
     if (activeCategory !== "all") {
       result = result.filter(p =>
@@ -69,9 +87,9 @@ function ProductsPageContent() {
     }
 
     return result;
-  }, [activeCategory, searchQuery, sortBy, showUnavailable]);
+  }, [products, activeCategory, searchQuery, sortBy, showUnavailable]);
 
-  const activeCat = MOCK_CATEGORIES.find(c => c.slug === activeCategory);
+  const activeCat = categories.find(c => c.slug === activeCategory);
   const catDesc   = CAT_DESCRIPTIONS[activeCategory] ?? "";
 
   return (
@@ -97,7 +115,7 @@ function ProductsPageContent() {
         {/* ── Category tabs (horizontal scroll on mobile) ── */}
         <AnimateIn delay={0.25} className="relative mb-4">
           <AnimateInGroup stagger={0.05} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
-            {MOCK_CATEGORIES.map(cat => (
+            {categories.map(cat => (
               <AnimateIn key={cat.slug}>
                 <button
                   onClick={() => setActiveCategory(cat.slug)}

@@ -4,7 +4,7 @@
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   LineChart, Line,
   BarChart, Bar,
@@ -14,10 +14,7 @@ import {
 import LineGraphStatistics from "@/components/ui/line-graph-statistics";
 import PageTransition      from "@/components/ui/PageTransition";
 import { useTheme }        from "@/context/ThemeContext";
-import {
-  getMockSalesData, getMockAnalyticsSummary, getMockCategories,
-  getMockOrders, downloadCSV, formatPKR, getOrderStatusColor,
-} from "@/lib/admin-mock-data";
+import { fetchAnalytics, fetchAdminCategories, fetchAdminOrders } from "@/lib/db-client";
 import type { SalesDataPoint } from "@/lib/admin-types";
 import {
   Download, BarChart2, Table2, TrendingUp, PieChart as PieIcon,
@@ -41,16 +38,63 @@ export default function AnalyticsPage() {
   const [catFilter,    setCatFilter]    = useState<"all" | string>("all");
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
 
-  const rawData    = useMemo(() => getMockSalesData(period),        [period]);
-  const summary    = useMemo(() => getMockAnalyticsSummary(period), [period]);
-  const categories = useMemo(() => getMockCategories(),             []);
-  const allOrders  = useMemo(() => getMockOrders(),                 []);
+  const [rawData, setRawData] = useState<SalesDataPoint[]>([]);
+  const [summary, setSummary] = useState({ total_sold: 0, total_revenue: 0, avg_order_value: 0, growth_pct: 0 });
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; product_count: number }>>([]);
+  const [allOrders, setAllOrders] = useState<Array<{ id: string; customer_name: string; customer_phone: string | null; total_amount: number; status: string; created_at: string }>>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const [analyticsData, categoryRows, orderRows] = await Promise.all([
+        fetchAnalytics(period),
+        fetchAdminCategories(),
+        fetchAdminOrders(),
+      ]);
+
+      setRawData(analyticsData.rawData);
+      setSummary(analyticsData.summary);
+      setCategories(categoryRows);
+      setAllOrders(orderRows);
+    })();
+  }, [period]);
+
+  function formatPKR(amount: number): string {
+    return `Rs ${Math.round(amount).toLocaleString("en-PK")}`;
+  }
+
+  function getOrderStatusColor(status: string): string {
+    const map: Record<string, string> = {
+      pending: "bg-amber-100 text-amber-800",
+      confirmed: "bg-blue-100 text-blue-800",
+      in_progress: "bg-purple-100 text-purple-800",
+      shipped: "bg-teal-100 text-teal-800",
+      delivered: "bg-green-100 text-green-800",
+      cancelled: "bg-red-100 text-red-800",
+    };
+    return map[status] ?? "bg-gray-100 text-gray-700";
+  }
+
+  function downloadCSV(data: object[], filename: string): void {
+    if (!data.length) return;
+    const headers = Object.keys(data[0]);
+    const rows = data.map((row) =>
+      headers.map((h) => JSON.stringify((row as Record<string, unknown>)[h] ?? "")).join(",")
+    );
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   /* Pie data: category breakdown */
   const pieData = useMemo(() =>
     categories.map((c, i) => ({
       name:  c.name,
-      value: Math.floor(Math.random() * 80 + 20),
+      value: c.product_count,
       color: PIE_COLORS[i % PIE_COLORS.length],
     })),
     [categories]
@@ -77,7 +121,7 @@ export default function AnalyticsPage() {
     { label: "Units Sold",      value: summary.total_sold.toString(),      icon: <ShoppingBag size={18} />, bg: isDark ? "bg-amber-900/30" : "bg-amber-50", text: isDark ? "text-amber-300" : "text-amber-700" },
     { label: "Total Revenue",   value: formatPKR(summary.total_revenue),   icon: <DollarSign  size={18} />, bg: isDark ? "bg-teal-900/30"  : "bg-teal-50",  text: isDark ? "text-teal-300"  : "text-teal-700"  },
     { label: "Avg Order Value", value: formatPKR(summary.avg_order_value), icon: <TrendingUp  size={18} />, bg: isDark ? "bg-rose-900/30"  : "bg-rose-50",  text: isDark ? "text-rose-300"  : "text-rose-600"  },
-    { label: "Growth",          value: `+${summary.growth_pct}%`,          icon: <Users       size={18} />, bg: isDark ? "bg-green-900/30" : "bg-green-50", text: isDark ? "text-green-300" : "text-green-700" },
+    { label: "Growth",          value: `${summary.growth_pct}%`,           icon: <Users       size={18} />, bg: isDark ? "bg-green-900/30" : "bg-green-50", text: isDark ? "text-green-300" : "text-green-700" },
   ];
 
   return (

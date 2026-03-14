@@ -22,7 +22,7 @@ export interface Category {
   name:        string;   // e.g. "Bags"
   slug:        string;   // e.g. "bags"
   description: string | null;
-  image_url:   string | null;
+  image_url?:  string | null;
   sort_order:  number;
 }
 

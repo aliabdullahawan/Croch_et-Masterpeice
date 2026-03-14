@@ -122,6 +122,8 @@ export const AnimatedMarqueeHero: React.FC<AnimatedMarqueeHeroProps> = ({
                 rotate: `${(index % 2 === 0 ? -3 : 4)}deg`,
               }}
             >
+              {/* Source list is dynamic and can include arbitrary remote URLs. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
                 alt={`Showcase image ${index + 1}`}
