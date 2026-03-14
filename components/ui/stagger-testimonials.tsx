@@ -1,8 +1,10 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import React, { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getAvatarGradient, getInitials } from "@/lib/utils";
 
 const SQRT_5000 = Math.sqrt(5000);
 
@@ -10,129 +12,51 @@ export interface StaggerTestimonialItem {
   tempId: number;
   testimonial: string;
   by: string;
-  imgSrc: string;
+  rating: number;
+  createdAt: string;
+  productName: string;
+  productSlug: string;
+  productImage?: string | null;
+  productDescription?: string | null;
+  productPrice?: number | null;
 }
 
 const defaultTestimonials: StaggerTestimonialItem[] = [
   {
     tempId: 0,
-    testimonial: "My favorite solution in the market. We work 5x faster with COMPANY.",
-    by: "Alex, CEO at TechCorp",
-    imgSrc: "https://i.pravatar.cc/150?img=1",
+    testimonial: "My favorite piece in the collection. Premium stitching and perfect texture.",
+    by: "Ayesha",
+    rating: 5,
+    createdAt: new Date().toISOString(),
+    productName: "Handmade Tote",
+    productSlug: "products",
+    productImage: null,
+    productDescription: "Premium handcrafted tote with smooth finishing.",
+    productPrice: 2800,
   },
   {
     tempId: 1,
-    testimonial: "I'm confident my data is safe with COMPANY. I can't say that about other providers.",
-    by: "Dan, CTO at SecureNet",
-    imgSrc: "https://i.pravatar.cc/150?img=2",
+    testimonial: "Color combination is exactly what I requested and delivery was smooth.",
+    by: "Noor",
+    rating: 5,
+    createdAt: new Date().toISOString(),
+    productName: "Custom Sweater",
+    productSlug: "products",
+    productImage: null,
+    productDescription: "Custom colorwork and soft texture.",
+    productPrice: 4500,
   },
   {
     tempId: 2,
-    testimonial: "I know it's cliche, but we were lost before we found COMPANY. Can't thank you guys enough!",
-    by: "Stephanie, COO at InnovateCo",
-    imgSrc: "https://i.pravatar.cc/150?img=3",
-  },
-  {
-    tempId: 3,
-    testimonial: "COMPANY's products make planning for the future seamless. Can't recommend them enough!",
-    by: "Marie, CFO at FuturePlanning",
-    imgSrc: "https://i.pravatar.cc/150?img=4",
-  },
-  {
-    tempId: 4,
-    testimonial: "If I could give 11 stars, I'd give 12.",
-    by: "Andre, Head of Design at CreativeSolutions",
-    imgSrc: "https://i.pravatar.cc/150?img=5",
-  },
-  {
-    tempId: 5,
-    testimonial: "SO SO SO HAPPY WE FOUND YOU GUYS!!!! I'd bet you've saved me 100 hours so far.",
-    by: "Jeremy, Product Manager at TimeWise",
-    imgSrc: "https://i.pravatar.cc/150?img=6",
-  },
-  {
-    tempId: 6,
-    testimonial: "Took some convincing, but now that we're on COMPANY, we're never going back.",
-    by: "Pam, Marketing Director at BrandBuilders",
-    imgSrc: "https://i.pravatar.cc/150?img=7",
-  },
-  {
-    tempId: 7,
-    testimonial: "I would be lost without COMPANY's in-depth analytics. The ROI is EASILY 100X for us.",
-    by: "Daniel, Data Scientist at AnalyticsPro",
-    imgSrc: "https://i.pravatar.cc/150?img=8",
-  },
-  {
-    tempId: 8,
-    testimonial: "It's just the best. Period.",
-    by: "Fernando, UX Designer at UserFirst",
-    imgSrc: "https://i.pravatar.cc/150?img=9",
-  },
-  {
-    tempId: 9,
-    testimonial: "I switched 5 years ago and never looked back.",
-    by: "Andy, DevOps Engineer at CloudMasters",
-    imgSrc: "https://i.pravatar.cc/150?img=10",
-  },
-  {
-    tempId: 10,
-    testimonial: "I've been searching for a solution like COMPANY for YEARS. So glad I finally found one!",
-    by: "Pete, Sales Director at RevenueRockets",
-    imgSrc: "https://i.pravatar.cc/150?img=11",
-  },
-  {
-    tempId: 11,
-    testimonial: "It's so simple and intuitive, we got the team up to speed in 10 minutes.",
-    by: "Marina, HR Manager at TalentForge",
-    imgSrc: "https://i.pravatar.cc/150?img=12",
-  },
-  {
-    tempId: 12,
-    testimonial: "COMPANY's customer support is unparalleled. They're always there when we need them.",
-    by: "Olivia, Customer Success Manager at ClientCare",
-    imgSrc: "https://i.pravatar.cc/150?img=13",
-  },
-  {
-    tempId: 13,
-    testimonial: "The efficiency gains we've seen since implementing COMPANY are off the charts!",
-    by: "Raj, Operations Manager at StreamlineSolutions",
-    imgSrc: "https://i.pravatar.cc/150?img=14",
-  },
-  {
-    tempId: 14,
-    testimonial: "COMPANY has revolutionized how we handle our workflow. It's a game-changer!",
-    by: "Lila, Workflow Specialist at ProcessPro",
-    imgSrc: "https://i.pravatar.cc/150?img=15",
-  },
-  {
-    tempId: 15,
-    testimonial: "The scalability of COMPANY's solution is impressive. It grows with our business seamlessly.",
-    by: "Trevor, Scaling Officer at GrowthGurus",
-    imgSrc: "https://i.pravatar.cc/150?img=16",
-  },
-  {
-    tempId: 16,
-    testimonial: "I appreciate how COMPANY continually innovates. They're always one step ahead.",
-    by: "Naomi, Innovation Lead at FutureTech",
-    imgSrc: "https://i.pravatar.cc/150?img=17",
-  },
-  {
-    tempId: 17,
-    testimonial: "The ROI we've seen with COMPANY is incredible. It's paid for itself many times over.",
-    by: "Victor, Finance Analyst at ProfitPeak",
-    imgSrc: "https://i.pravatar.cc/150?img=18",
-  },
-  {
-    tempId: 18,
-    testimonial: "COMPANY's platform is so robust, yet easy to use. It's the perfect balance.",
-    by: "Yuki, Tech Lead at BalancedTech",
-    imgSrc: "https://i.pravatar.cc/150?img=19",
-  },
-  {
-    tempId: 19,
-    testimonial: "We've tried many solutions, but COMPANY stands out in terms of reliability and performance.",
-    by: "Zoe, Performance Manager at ReliableSystems",
-    imgSrc: "https://i.pravatar.cc/150?img=20",
+    testimonial: "The product quality feels luxurious and the design is exactly like the photo.",
+    by: "Maham",
+    rating: 4,
+    createdAt: new Date().toISOString(),
+    productName: "Crochet Flower Bag",
+    productSlug: "products",
+    productImage: null,
+    productDescription: "Stylish daily-use bag with floral crochet details.",
+    productPrice: 3200,
   },
 ];
 
@@ -150,27 +74,44 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
   cardSize,
 }) => {
   const isCenter = position === 0;
+  const cardBackground = isCenter
+    ? "linear-gradient(145deg, rgba(12,12,12,0.96), rgba(26,16,10,0.96))"
+    : "linear-gradient(145deg, rgba(10,10,10,0.94), rgba(18,18,18,0.92))";
+  const cardShadow = isCenter
+    ? "0 22px 55px rgba(0,0,0,0.48), 0px 8px 0px 2px rgba(201,160,40,0.45)"
+    : "0 14px 36px rgba(0,0,0,0.34)";
+
+  const formattedDate = new Date(testimonial.createdAt).toLocaleDateString("en-PK", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  const shortProductInfo = testimonial.productDescription
+    ? testimonial.productDescription.slice(0, 88) + (testimonial.productDescription.length > 88 ? "..." : "")
+    : "Handcrafted with premium finishing.";
 
   return (
     <div
       onClick={() => handleMove(position)}
       className={cn(
-        "absolute left-1/2 top-1/2 cursor-pointer border-2 p-8 transition-all duration-500 ease-in-out",
+        "group absolute left-1/2 top-1/2 cursor-pointer border-2 p-6 transition-all duration-700 ease-in-out",
         isCenter
-          ? "z-10 bg-primary text-primary-foreground border-primary"
-          : "z-0 bg-card text-card-foreground border-border hover:border-primary/50"
+          ? "z-10 text-[#F7EEE4] border-[#C9A028]/60"
+          : "z-0 text-[#E6D8C7] border-white/10 hover:border-[#C9A028]/45 hover:-translate-y-1"
       )}
       style={{
         width: cardSize,
         height: cardSize,
-        clipPath: "polygon(50px 0%, calc(100% - 50px) 0%, 100% 50px, 100% 100%, calc(100% - 50px) 100%, 50px 100%, 0 100%, 0 0)",
+        background: cardBackground,
+        clipPath: "polygon(42px 0%, calc(100% - 42px) 0%, 100% 42px, 100% 100%, calc(100% - 42px) 100%, 42px 100%, 0 100%, 0 0)",
         transform: `
           translate(-50%, -50%)
-          translateX(${(cardSize / 1.5) * position}px)
-          translateY(${isCenter ? -65 : position % 2 ? 15 : -15}px)
-          rotate(${isCenter ? 0 : position % 2 ? 2.5 : -2.5}deg)
+          translateX(${(cardSize / 1.55) * position}px)
+          translateY(${isCenter ? -55 : position % 2 ? 16 : -16}px)
+          rotate(${isCenter ? 0 : position % 2 ? 2.3 : -2.3}deg)
         `,
-        boxShadow: isCenter ? "0px 8px 0px 4px hsl(var(--border))" : "0px 0px 0px 0px transparent",
+        boxShadow: cardShadow,
       }}
     >
       <span
@@ -182,24 +123,60 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
           height: 2,
         }}
       />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={testimonial.imgSrc}
-        alt={`${testimonial.by.split(",")[0]}`}
-        className="mb-4 h-14 w-12 bg-muted object-cover object-top"
-        style={{
-          boxShadow: "3px 3px 0px hsl(var(--background))",
-        }}
-      />
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div
+          className="h-14 w-14 rounded-2xl flex items-center justify-center text-base font-semibold"
+          style={{
+            background: getAvatarGradient(testimonial.by),
+            color: "#fff",
+            boxShadow: "3px 3px 0px hsl(var(--background))",
+          }}
+        >
+          {getInitials(testimonial.by)}
+        </div>
+        <Link
+          href={`/products/${testimonial.productSlug}`}
+          className={cn(
+            "h-24 w-24 rounded-2xl overflow-hidden border border-border transition-transform duration-300",
+            "group-hover:scale-105"
+          )}
+        >
+          {testimonial.productImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={testimonial.productImage} alt={testimonial.productName} className="h-full w-full object-cover" />
+          ) : (
+            <div className="h-full w-full bg-muted/40 flex items-center justify-center text-[10px] px-1 text-center">Product</div>
+          )}
+        </Link>
+      </div>
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Star
+              key={`${testimonial.tempId}-star-${index}`}
+              size={13}
+              className={index < testimonial.rating ? "text-[#E2B84A] fill-[#E2B84A]" : "text-white/25"}
+            />
+          ))}
+        </div>
+        <span className="text-[11px] text-[#C9A47A]">{formattedDate}</span>
+      </div>
       <h3 className={cn(
-        "text-base sm:text-xl font-medium",
-        isCenter ? "text-primary-foreground" : "text-foreground"
+        "text-base sm:text-lg font-medium leading-snug",
+        isCenter ? "text-[#F9F2E9]" : "text-[#EBDCCB]"
       )}>
         "{testimonial.testimonial}"
       </h3>
+      <p className="mt-3 text-[13px] text-[#D4BE9D] leading-relaxed line-clamp-2">{shortProductInfo}</p>
       <p className={cn(
-        "absolute bottom-8 left-8 right-8 mt-2 text-sm italic",
-        isCenter ? "text-primary-foreground/80" : "text-muted-foreground"
+        "mt-4 text-xs uppercase tracking-wider",
+        isCenter ? "text-[#D9B471]" : "text-[#C7A879]"
+      )}>
+        {testimonial.productName} {testimonial.productPrice ? `• Rs ${Math.round(testimonial.productPrice).toLocaleString("en-PK")}` : ""}
+      </p>
+      <p className={cn(
+        "mt-2 text-sm italic",
+        isCenter ? "text-[#F3E6D8]" : "text-[#D6C4AE]"
       )}>
         - {testimonial.by}
       </p>
@@ -212,8 +189,10 @@ interface StaggerTestimonialsProps {
 }
 
 export const StaggerTestimonials: React.FC<StaggerTestimonialsProps> = ({ items }) => {
-  const [cardSize, setCardSize] = useState(365);
+  const [cardSize, setCardSize] = useState(420);
   const [testimonialsList, setTestimonialsList] = useState<StaggerTestimonialItem[]>(items && items.length > 0 ? items : defaultTestimonials);
+  const [isPaused, setIsPaused] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
     if (items && items.length > 0) {
@@ -221,28 +200,30 @@ export const StaggerTestimonials: React.FC<StaggerTestimonialsProps> = ({ items 
     }
   }, [items]);
 
-  const handleMove = (steps: number) => {
-    const newList = [...testimonialsList];
-    if (steps > 0) {
-      for (let i = steps; i > 0; i -= 1) {
-        const item = newList.shift();
-        if (!item) return;
-        newList.push({ ...item, tempId: Math.random() });
+  const handleMove = useCallback((steps: number) => {
+    setTestimonialsList((current) => {
+      const newList = [...current];
+      if (steps > 0) {
+        for (let i = steps; i > 0; i -= 1) {
+          const item = newList.shift();
+          if (!item) return current;
+          newList.push({ ...item, tempId: Math.random() });
+        }
+      } else {
+        for (let i = steps; i < 0; i += 1) {
+          const item = newList.pop();
+          if (!item) return current;
+          newList.unshift({ ...item, tempId: Math.random() });
+        }
       }
-    } else {
-      for (let i = steps; i < 0; i += 1) {
-        const item = newList.pop();
-        if (!item) return;
-        newList.unshift({ ...item, tempId: Math.random() });
-      }
-    }
-    setTestimonialsList(newList);
-  };
+      return newList;
+    });
+  }, []);
 
   useEffect(() => {
     const updateSize = () => {
       const { matches } = window.matchMedia("(min-width: 640px)");
-      setCardSize(matches ? 365 : 290);
+      setCardSize(matches ? 420 : 320);
     };
 
     updateSize();
@@ -250,19 +231,43 @@ export const StaggerTestimonials: React.FC<StaggerTestimonialsProps> = ({ items 
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const applyPreference = () => setReduceMotion(mediaQuery.matches);
+    applyPreference();
+
+    mediaQuery.addEventListener("change", applyPreference);
+    return () => mediaQuery.removeEventListener("change", applyPreference);
+  }, []);
+
+  useEffect(() => {
+    if (isPaused || reduceMotion || testimonialsList.length <= 1) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      handleMove(1);
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, [isPaused, reduceMotion, testimonialsList.length, handleMove]);
+
   if (!testimonialsList.length) {
     return null;
   }
 
   return (
     <div
-      className="relative w-full overflow-hidden bg-muted/30"
+      className="relative w-full overflow-hidden rounded-3xl border border-white/10"
       style={{ height: 600 }}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={() => setIsPaused(true)}
+      onTouchEnd={() => setIsPaused(false)}
     >
       {testimonialsList.map((testimonial, index) => {
-        const position = testimonialsList.length % 2
-          ? index - (testimonialsList.length + 1) / 2
-          : index - testimonialsList.length / 2;
+        const midpoint = Math.floor(testimonialsList.length / 2);
+        const position = index - midpoint;
         return (
           <TestimonialCard
             key={testimonial.tempId}
@@ -273,12 +278,12 @@ export const StaggerTestimonials: React.FC<StaggerTestimonialsProps> = ({ items 
           />
         );
       })}
-      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-2">
         <button
           onClick={() => handleMove(-1)}
           className={cn(
-            "flex h-14 w-14 items-center justify-center text-2xl transition-colors",
-            "bg-background border-2 border-border hover:bg-primary hover:text-primary-foreground",
+            "flex h-14 w-14 items-center justify-center text-2xl transition-colors duration-700",
+            "bg-black/85 text-[#F3E6D8] border-2 border-white/15 hover:bg-[#C9A028] hover:text-[#1A0A05]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           )}
           aria-label="Previous testimonial"
@@ -288,8 +293,8 @@ export const StaggerTestimonials: React.FC<StaggerTestimonialsProps> = ({ items 
         <button
           onClick={() => handleMove(1)}
           className={cn(
-            "flex h-14 w-14 items-center justify-center text-2xl transition-colors",
-            "bg-background border-2 border-border hover:bg-primary hover:text-primary-foreground",
+            "flex h-14 w-14 items-center justify-center text-2xl transition-colors duration-700",
+            "bg-black/85 text-[#F3E6D8] border-2 border-white/15 hover:bg-[#C9A028] hover:text-[#1A0A05]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           )}
           aria-label="Next testimonial"

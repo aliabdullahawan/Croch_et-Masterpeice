@@ -5,9 +5,7 @@
  * Features: sort, availability filter, search, horizontal-scroll category tabs
  */
 
-"use client";
 import { useState, useMemo, Suspense, useEffect } from "react";
-import Image                  from "next/image";
 import ProductCard            from "@/components/ProductCard";
 import GlowSearchBar          from "@/components/ui/animated-glowing-search-bar";
 import { fetchProducts, fetchStoreCategories } from "@/lib/db-client";

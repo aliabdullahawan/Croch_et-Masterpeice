@@ -4,20 +4,36 @@
  */
 import { useState } from "react";
 import Link         from "next/link";
+import { supabase } from "@/lib/supabase";
 import { Mail, Scissors } from "lucide-react";
 
 export default function AdminForgotPasswordPage() {
   const [email,   setEmail]   = useState("");
   const [loading, setLoading] = useState(false);
   const [sent,    setSent]    = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    /* TODO: Supabase → supabase.auth.resetPasswordForEmail(email) */
-    await new Promise(r => setTimeout(r, 900));
-    setSent(true);
-    setLoading(false);
+    setError(null);
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/admin/login`,
+      });
+
+      if (resetError) {
+        throw resetError;
+      }
+
+      setSent(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to send reset link right now.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,6 +68,11 @@ export default function AdminForgotPasswordPage() {
               <h1 className="font-display text-xl text-[#F2E9DE] mb-1">Reset Password</h1>
               <p className="font-body text-xs text-[#7A5A48] mb-6">Admin password reset via email</p>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error ? (
+                  <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                    {error}
+                  </div>
+                ) : null}
                 <div>
                   <label className="block font-body text-xs text-[#C8B89A]/60 mb-1.5">Admin Email</label>
                   <input type="email" required value={email} onChange={e => setEmail(e.target.value)}

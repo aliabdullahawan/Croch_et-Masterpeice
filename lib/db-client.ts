@@ -75,6 +75,14 @@ export interface AdminNotificationItem {
   created_at: string;
 }
 
+export interface SiteNotificationItem {
+  id: string;
+  event_type: "product_new" | "order_high_value" | "review_5star";
+  title: string;
+  message: string;
+  created_at: string;
+}
+
 export interface UserOrderSummary {
   id: string;
   status: OrderStatus;
@@ -822,6 +830,31 @@ export async function fetchAdminNotifications(): Promise<AdminNotificationItem[]
   }
 
   return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+
+export async function fetchSiteNotifications(limit = 8): Promise<SiteNotificationItem[]> {
+  if (!isSupabaseConfigured) {
+    return [];
+  }
+
+  const { data, error } = await db
+    .from("site_notifications")
+    .select("id, event_type, title, message, created_at")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    id: String(row.id),
+    event_type: String(row.event_type) as SiteNotificationItem["event_type"],
+    title: String(row.title ?? "Update"),
+    message: String(row.message ?? ""),
+    created_at: String(row.created_at),
+  }));
 }
 
 export async function fetchUserOrders(userId: string): Promise<UserOrderSummary[]> {

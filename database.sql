@@ -304,6 +304,28 @@ create table if not exists public.admin_settings (
 	updated_at timestamptz not null default now()
 );
 
+create table if not exists public.site_notifications (
+	id bigserial primary key,
+	event_type text not null check (event_type in ('product_new', 'order_high_value', 'review_5star')),
+	title text not null,
+	message text not null,
+	meta jsonb,
+	is_active boolean not null default true,
+	created_at timestamptz not null default now()
+);
+
+create index if not exists idx_site_notifications_created_at on public.site_notifications(created_at desc);
+create index if not exists idx_site_notifications_active on public.site_notifications(is_active, created_at desc);
+create unique index if not exists idx_site_notifications_unique_product
+	on public.site_notifications ((meta->>'product_id'))
+	where event_type = 'product_new' and meta ? 'product_id';
+create unique index if not exists idx_site_notifications_unique_order
+	on public.site_notifications ((meta->>'order_id'))
+	where event_type = 'order_high_value' and meta ? 'order_id';
+create unique index if not exists idx_site_notifications_unique_review
+	on public.site_notifications ((meta->>'review_id'))
+	where event_type = 'review_5star' and meta ? 'review_id';
+
 alter table public.profiles enable row level security;
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
@@ -318,6 +340,7 @@ alter table public.reviews enable row level security;
 alter table public.review_images enable row level security;
 alter table public.contact_messages enable row level security;
 alter table public.admin_settings enable row level security;
+alter table public.site_notifications enable row level security;
 
 drop policy if exists "profiles_select_own_or_admin" on public.profiles;
 create policy "profiles_select_own_or_admin"
@@ -572,6 +595,158 @@ on public.admin_settings for all
 using (public.is_admin(auth.uid()))
 with check (public.is_admin(auth.uid()));
 
+drop policy if exists "site_notifications_public_read" on public.site_notifications;
+create policy "site_notifications_public_read"
+on public.site_notifications for select
+using (is_active = true);
+
+drop policy if exists "site_notifications_admin_manage" on public.site_notifications;
+create policy "site_notifications_admin_manage"
+on public.site_notifications for all
+using (public.is_admin(auth.uid()))
+with check (public.is_admin(auth.uid()));
+
+create or replace function public.notify_new_product()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+	insert into public.site_notifications(event_type, title, message, meta)
+	values (
+		'product_new',
+		'New Product Added',
+		format('%s is now available in store.', new.name),
+		jsonb_build_object('product_id', new.id, 'slug', new.slug)
+	)
+	on conflict do nothing;
+	return new;
+end;
+$$;
+
+create or replace function public.notify_high_value_order()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+	if coalesce(new.total_amount, 0) >= 2000 then
+		insert into public.site_notifications(event_type, title, message, meta)
+		values (
+			'order_high_value',
+			'High Value Order',
+			format('Order from %s reached Rs %s.', coalesce(new.customer_name, 'Customer'), to_char(new.total_amount, 'FM999,999,999')),
+			jsonb_build_object('order_id', new.id, 'amount', new.total_amount)
+		)
+		on conflict do nothing;
+	end if;
+	return new;
+end;
+$$;
+
+create or replace function public.notify_five_star_review()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+	v_product_name text;
+begin
+	if new.rating = 5 and new.is_approved = true then
+		if tg_op = 'UPDATE' and old.is_approved = true and old.rating = 5 then
+			return new;
+		end if;
+
+		if exists (
+			select 1
+			from public.site_notifications sn
+			where sn.event_type = 'review_5star'
+				and sn.meta->>'review_id' = new.id::text
+		) then
+			return new;
+		end if;
+
+		select p.name into v_product_name
+		from public.products p
+		where p.id = new.product_id;
+
+		insert into public.site_notifications(event_type, title, message, meta)
+		values (
+			'review_5star',
+			'New 5-Star Review',
+			format('A 5-star review was posted for %s.', coalesce(v_product_name, 'a product')),
+			jsonb_build_object('review_id', new.id, 'product_id', new.product_id)
+		)
+		on conflict do nothing;
+	end if;
+
+	return new;
+end;
+$$;
+
+drop trigger if exists trg_notify_new_product on public.products;
+create trigger trg_notify_new_product
+after insert on public.products
+for each row execute procedure public.notify_new_product();
+
+drop trigger if exists trg_notify_high_value_order on public.orders;
+create trigger trg_notify_high_value_order
+after insert on public.orders
+for each row execute procedure public.notify_high_value_order();
+
+drop trigger if exists trg_notify_five_star_review_insert on public.reviews;
+create trigger trg_notify_five_star_review_insert
+after insert on public.reviews
+for each row execute procedure public.notify_five_star_review();
+
+drop trigger if exists trg_notify_five_star_review_update on public.reviews;
+create trigger trg_notify_five_star_review_update
+after update of is_approved, rating on public.reviews
+for each row execute procedure public.notify_five_star_review();
+
+-- One-time backfill for existing data (safe to run repeatedly due unique indexes + conflict handling).
+insert into public.site_notifications(event_type, title, message, meta, created_at)
+select
+	'product_new',
+	'New Product Added',
+	format('%s is now available in store.', p.name),
+	jsonb_build_object('product_id', p.id, 'slug', p.slug),
+	p.created_at
+from public.products p
+order by p.created_at desc
+limit 50
+on conflict do nothing;
+
+insert into public.site_notifications(event_type, title, message, meta, created_at)
+select
+	'order_high_value',
+	'High Value Order',
+	format('Order from %s reached Rs %s.', coalesce(o.customer_name, 'Customer'), to_char(o.total_amount, 'FM999,999,999')),
+	jsonb_build_object('order_id', o.id, 'amount', o.total_amount),
+	o.created_at
+from public.orders o
+where coalesce(o.total_amount, 0) >= 2000
+order by o.created_at desc
+limit 50
+on conflict do nothing;
+
+insert into public.site_notifications(event_type, title, message, meta, created_at)
+select
+	'review_5star',
+	'New 5-Star Review',
+	format('A 5-star review was posted for %s.', coalesce(p.name, 'a product')),
+	jsonb_build_object('review_id', r.id, 'product_id', r.product_id),
+	r.created_at
+from public.reviews r
+left join public.products p on p.id = r.product_id
+where r.rating = 5 and r.is_approved = true
+order by r.created_at desc
+limit 50
+on conflict do nothing;
+
 create or replace view public.order_stats as
 select
 	count(*)::bigint as total_orders,
@@ -628,6 +803,82 @@ alter default privileges in schema public grant select, insert, update, delete o
 alter default privileges in schema public grant usage, select on sequences to authenticated;
 
 grant execute on function public.is_admin(uuid) to anon, authenticated, service_role;
+
+-- Storage: avatars bucket for profile pictures.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+	'avatars',
+	'avatars',
+	true,
+	5242880,
+	array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+)
+on conflict (id) do update
+set
+	public = excluded.public,
+	file_size_limit = excluded.file_size_limit,
+	allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "avatars_public_read" on storage.objects;
+create policy "avatars_public_read"
+on storage.objects for select
+using (bucket_id = 'avatars');
+
+drop policy if exists "avatars_auth_insert_own_folder" on storage.objects;
+create policy "avatars_auth_insert_own_folder"
+on storage.objects for insert
+to authenticated
+with check (
+	bucket_id = 'avatars'
+	and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "avatars_auth_update_own_folder" on storage.objects;
+create policy "avatars_auth_update_own_folder"
+on storage.objects for update
+to authenticated
+using (
+	bucket_id = 'avatars'
+	and (storage.foldername(name))[1] = auth.uid()::text
+)
+with check (
+	bucket_id = 'avatars'
+	and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "avatars_auth_delete_own_folder" on storage.objects;
+create policy "avatars_auth_delete_own_folder"
+on storage.objects for delete
+to authenticated
+using (
+	bucket_id = 'avatars'
+	and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Inspection queries (run manually in SQL editor as needed):
+-- select id, full_name, avatar_url from public.profiles order by created_at desc limit 200;
+--
+-- select 'categories' as table_name, count(*) from public.categories where image_bytes is not null
+-- union all
+-- select 'custom_order_images', count(*) from public.custom_order_images where image_bytes is not null
+-- union all
+-- select 'product_images', count(*) from public.product_images where image_bytes is not null
+-- union all
+-- select 'review_images', count(*) from public.review_images where image_bytes is not null;
+--
+-- select 'product_images' as table_name, count(*) from public.product_images where file_name is not null
+-- union all
+-- select 'custom_order_images', count(*) from public.custom_order_images where file_name is not null
+-- union all
+-- select 'review_images', count(*) from public.review_images where file_name is not null;
+
+revoke execute on function public.promote_admin_by_email(text, text) from public, anon, authenticated;
+grant execute on function public.promote_admin_by_email(text, text) to service_role;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.set_updated_at() from public, anon, authenticated;
+revoke execute on function public.notify_new_product() from public, anon, authenticated;
+revoke execute on function public.notify_high_value_order() from public, anon, authenticated;
+revoke execute on function public.notify_five_star_review() from public, anon, authenticated;
 
 -- Admin bootstrap (profile role only).
 -- Password is NOT stored in public.profiles.

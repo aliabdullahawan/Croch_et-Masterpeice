@@ -1,0 +1,102 @@
+# CROCH_ET MASTERPIECE - LATEST WORKING STATUS
+
+## 1) CURRENT STATE
+
+Project is in a stable, production-ready state with successful lint/build checks after all recent updates.
+
+Latest verification:
+- `npm run lint` -> pass
+- `npm run build` -> pass
+
+
+## 2) WHAT IS FULLY IMPLEMENTED
+
+### A) Reviews Section (Homepage)
+- Review cards are visible again (positioning bug fixed for small review counts).
+- Review cards include:
+  - average rating (header summary)
+  - star rating per review
+  - review date
+  - product info (name, short detail, price)
+  - larger product image thumbnail
+- Dark premium review style applied with stronger contrast and aesthetics.
+
+Key files:
+- `components/ReviewsCarousel.tsx`
+- `components/ui/stagger-testimonials.tsx`
+
+
+### B) Navbar Notifications (Main Menu)
+- Notification bell added in main navbar with unread badge.
+- Dropdown list added with latest notifications.
+- Notification types handled:
+  - new product
+  - order amount >= 2000
+  - approved 5-star review
+
+Key files:
+- `components/Navbar.tsx`
+- `lib/db-client.ts`
+
+
+### C) Database Notification System
+- Added `site_notifications` table.
+- Added trigger functions + triggers for automatic notification creation.
+- Added RLS policies:
+  - public read for active notifications
+  - admin manage permissions
+- Added dedupe indexes and conflict-safe inserts.
+- Added one-time backfill SQL for existing data.
+
+Key file:
+- `database.sql`
+
+
+### D) Avatar / PFP End-to-End
+- Added avatars bucket setup and policies in SQL.
+- User/admin can select profile image and upload to Supabase Storage bucket.
+- Stored value saved into `profiles.avatar_url` and auth metadata `avatar_url`.
+- Deployed env support for avatar bucket.
+
+Key files:
+- `app/profile/page.tsx`
+- `app/admin/profile/page.tsx`
+- `lib/avatar-storage.ts`
+- `.env.example`
+- `database.sql`
+
+
+### E) Home Page Aesthetic Improvements
+- Added visual moodboard/collage section using local images.
+- Enhanced section textures and hover/animation polish.
+
+Key file:
+- `app/page.tsx`
+
+
+## 3) REQUIRED ACTION ON SUPABASE (IMPORTANT)
+
+Code is complete, but SQL must be executed in Supabase SQL Editor to activate DB-side features:
+- avatars bucket + storage policies
+- site_notifications table + policies
+- trigger functions + triggers
+- dedupe indexes + backfill
+
+Use the SQL already present in:
+- `database.sql`
+
+
+## 4) QUICK CHECKLIST
+
+- [x] Reviews visible and styled
+- [x] Avg rating/stars/date/product info added
+- [x] Navbar bell notifications implemented
+- [x] Notification SQL logic implemented
+- [x] Avatar upload to bucket implemented
+- [x] Lint/build passing
+
+
+## 5) FINAL SUMMARY
+
+The latest requested features are implemented in code and validated locally.
+Remaining external step is only to run the updated SQL in Supabase so database-triggered notifications and bucket policies become active in your live backend.

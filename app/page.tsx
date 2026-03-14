@@ -20,24 +20,24 @@ export default function HomePage() {
       <HeroSlider />
 
       {/* ══════════════════ FEATURED PRODUCTS ════════════════ */}
-      <section className="py-14 md:py-24 max-w-7xl mx-auto px-4 sm:px-6">
+      <section className="py-14 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 textured-surface">
         <AnimateIn className="text-center mb-10 md:mb-14">
           <span className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold">Our Collection</span>
-          <h2 className="section-heading mt-3">Featured Products</h2>
+          <h2 className="section-heading mt-3 text-write-slow">Featured Products</h2>
           <div className="divider"/>
           <p className="font-body text-brand-creamDim/60 max-w-md mx-auto text-sm leading-relaxed">
             Swipe or click to explore. Visit the Products page to see everything.
           </p>
         </AnimateIn>
-        <AnimateIn delay={0.15}>
+        <AnimateIn delay={0.15} className="hover-lift-slow">
           <FeaturedProductsSlider />
         </AnimateIn>
       </section>
 
       {/* ══════════════════════ ABOUT ════════════════════════ */}
-      <section className="py-14 md:py-24 overflow-hidden" style={{ background: "#F5EDE4" }}>
+      <section className="py-14 md:py-24 overflow-hidden textured-surface" style={{ background: "#F5EDE4" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          <AnimateIn direction="left" className="relative h-[280px] sm:h-[380px] lg:h-[480px] rounded-2xl overflow-hidden order-2 lg:order-1">
+          <AnimateIn direction="left" className="relative h-[280px] sm:h-[380px] lg:h-[480px] rounded-2xl overflow-hidden order-2 lg:order-1 hover-lift-slow">
             <Image src="https://i.pinimg.com/736x/5d/f7/69/5df7696c4f24b7961c8c72748a355ff8.jpg" alt="Crafting" fill className="object-cover"/>
             <div className="absolute inset-0 bg-gradient-to-br from-brand-deep/60 to-transparent"/>
             <div className="absolute bottom-4 right-4 glass-card p-4">
@@ -47,7 +47,7 @@ export default function HomePage() {
           </AnimateIn>
           <AnimateIn direction="right" delay={0.1} className="order-1 lg:order-2">
             <span className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold">Our Story</span>
-            <h2 className="section-heading mt-3 mb-4 md:mb-6">Made by Hand,<br/><span className="text-brand-gold italic">Given with Heart</span></h2>
+            <h2 className="section-heading mt-3 mb-4 md:mb-6 text-write-slow">Made by Hand,<br/><span className="text-brand-gold italic">Given with Heart</span></h2>
             <p className="font-body text-brand-creamDim/70 leading-relaxed mb-3 text-sm md:text-base">Croch_et Masterpiece was born from a love of yarn, colour, and the meditative art of crochet. Every item is handcrafted — no machines, no shortcuts.</p>
             <p className="font-body text-brand-creamDim/70 leading-relaxed mb-6 text-sm md:text-base">Whether it&apos;s a gift or a treat for yourself, we pour care into every stitch. Custom orders are always welcome.</p>
             <div className="flex flex-wrap gap-3">
@@ -58,10 +58,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ════════════════════ CRAFT MOODBOARD ════════════════════ */}
+      <section className="py-14 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 textured-surface">
+        <AnimateIn className="text-center mb-10 md:mb-14">
+          <span className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold">Studio Vibes</span>
+          <h2 className="section-heading mt-3 text-write-slow">A Peek Into The Craft</h2>
+          <div className="divider" />
+        </AnimateIn>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <AnimateIn className="relative h-[280px] md:h-[360px] rounded-2xl overflow-hidden hover-lift-slow">
+            <Image src="/images/hero-bg-1.jpg" alt="Crochet textures and hook close-up" fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+          </AnimateIn>
+          <AnimateIn delay={0.12} className="relative h-[280px] md:h-[360px] rounded-2xl overflow-hidden hover-lift-slow">
+            <Image src="/images/hero-bg-2.jpg" alt="Crochet yarn and crafting tools" fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+          </AnimateIn>
+          <AnimateIn delay={0.24} className="relative h-[280px] md:h-[360px] rounded-2xl overflow-hidden hover-lift-slow">
+            <Image src="/images/hero-bg-3.jpg" alt="Handmade crochet aesthetic studio view" fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+          </AnimateIn>
+        </div>
+      </section>
+
       <CategoriesAccordion />
 
       {/* ════════════════════ CUSTOM ORDER CTA ════════════════════ */}
-      <section className="relative py-14 md:py-24 overflow-hidden bg-brand-deep">
+      <section className="relative py-14 md:py-24 overflow-hidden bg-brand-deep textured-surface">
         {/* Parallax Background Image */}
         <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none">
           <Image 
@@ -77,14 +101,14 @@ export default function HomePage() {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
           <AnimateIn>
-            <div className="relative rounded-3xl overflow-hidden p-8 sm:p-12 md:p-20 text-center border border-brand-gold/10"
+            <div className="relative rounded-3xl overflow-hidden p-8 sm:p-12 md:p-20 text-center border border-brand-gold/10 hover-lift-slow"
               style={{ background: "var(--bg-card)", backdropFilter: "blur(12px)", boxShadow: "0 20px 60px rgba(0,0,0,0.1)" }}
             >
               <div className="absolute top-0 left-0 w-64 h-64 bg-[#C9A028]/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"/>
               <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#E8A0A8]/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"/>
               <div className="relative z-10">
                 <AnimateIn delay={0.1}><Sparkles size={32} className="mx-auto mb-4 text-brand-gold"/></AnimateIn>
-                <AnimateIn delay={0.18}><h2 className="section-heading mb-4 text-brand-cream">Have Something in Mind?</h2></AnimateIn>
+                <AnimateIn delay={0.18}><h2 className="section-heading mb-4 text-brand-cream text-write-slow">Have Something in Mind?</h2></AnimateIn>
                 <AnimateIn delay={0.25}><p className="font-body text-brand-creamDim/80 max-w-xl mx-auto mb-8 text-sm md:text-base leading-relaxed">
                   We love creating custom pieces that match your vision. From specific colours to unique designs, let’s make your crochet masterpiece together.
                 </p></AnimateIn>
@@ -103,13 +127,13 @@ export default function HomePage() {
       <ReviewsCarousel />
 
       {/* ════════════════════ SOCIAL CTA ═════════════════════ */}
-      <section className="py-14 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 text-center">
+      <section className="py-14 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 text-center textured-surface">
         <AnimateInGroup stagger={0.15}>
           <AnimateIn>
             <p className="font-body text-xs uppercase tracking-[0.3em] text-brand-gold mb-4">Follow the Journey</p>
           </AnimateIn>
           <AnimateIn>
-            <h2 className="font-display text-brand-cream mb-3" style={{ fontSize: "clamp(1.75rem, 5vw, 2.5rem)" }}>Find Us on Social</h2>
+            <h2 className="font-display text-brand-cream mb-3 text-write-slow" style={{ fontSize: "clamp(1.75rem, 5vw, 2.5rem)" }}>Find Us on Social</h2>
           </AnimateIn>
           <AnimateIn>
             <p className="font-body text-sm text-brand-creamDim/60 mb-8 max-w-sm mx-auto">Behind-the-scenes, new drops, and customer creations — follow along.</p>

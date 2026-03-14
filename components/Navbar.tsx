@@ -10,11 +10,12 @@
  */
 
 import Link                   from "next/link";
-import { useState, useEffect } from "react";
-import { ShoppingBag, Heart, Menu, X, User, LogOut } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ShoppingBag, Heart, Menu, X, User, LogOut, Bell } from "lucide-react";
 import { useCart }     from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth }     from "@/context/AuthContext";
+import { fetchSiteNotifications, type SiteNotificationItem } from "@/lib/db-client";
 import ThemeToggle     from "@/components/ui/ThemeToggle";
 
 const NAV_LINKS = [
@@ -32,6 +33,11 @@ export default function Navbar() {
   const [scrolled,    setScrolled]    = useState(false);
   const [mobileOpen,  setMobileOpen]  = useState(false);
   const [userMenuOpen,setUserMenuOpen]= useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<SiteNotificationItem[]>([]);
+  const [lastSeen, setLastSeen] = useState<number>(0);
+  const notifCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Scroll detection ─────────────────────────────── */
   useEffect(() => {
@@ -47,10 +53,70 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  useEffect(() => {
+    const storedSeen = Number(localStorage.getItem("cm_notif_last_seen") ?? "0");
+    setLastSeen(Number.isFinite(storedSeen) ? storedSeen : 0);
+
+    void (async () => {
+      const rows = await fetchSiteNotifications(8);
+      setNotifications(rows);
+    })();
+  }, []);
+
+  const unreadNotifications = notifications.filter((item) => new Date(item.created_at).getTime() > lastSeen).length;
+
+  function markNotificationsSeen() {
+    const now = Date.now();
+    setLastSeen(now);
+    localStorage.setItem("cm_notif_last_seen", String(now));
+  }
+
+  function openNotifMenu() {
+    if (notifCloseTimer.current) {
+      clearTimeout(notifCloseTimer.current);
+      notifCloseTimer.current = null;
+    }
+    setNotifOpen(true);
+    markNotificationsSeen();
+  }
+
+  function closeNotifMenuWithDelay() {
+    if (notifCloseTimer.current) {
+      clearTimeout(notifCloseTimer.current);
+    }
+    notifCloseTimer.current = setTimeout(() => {
+      setNotifOpen(false);
+    }, 140);
+  }
+
+  function openUserMenu() {
+    if (userCloseTimer.current) {
+      clearTimeout(userCloseTimer.current);
+      userCloseTimer.current = null;
+    }
+    setUserMenuOpen(true);
+  }
+
+  function closeUserMenuWithDelay() {
+    if (userCloseTimer.current) {
+      clearTimeout(userCloseTimer.current);
+    }
+    userCloseTimer.current = setTimeout(() => {
+      setUserMenuOpen(false);
+    }, 140);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (notifCloseTimer.current) clearTimeout(notifCloseTimer.current);
+      if (userCloseTimer.current) clearTimeout(userCloseTimer.current);
+    };
+  }, []);
+
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
+        className={`group/nav fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
           scrolled
             ? "backdrop-blur-xl border-b"
             : "backdrop-blur-sm border-b border-transparent"
@@ -115,21 +181,76 @@ export default function Navbar() {
                 )}
               </Link>
 
+              {/* Notifications (desktop hover + mobile tap) */}
+              <div
+                className="relative"
+                onMouseEnter={openNotifMenu}
+                onMouseLeave={closeNotifMenuWithDelay}
+              >
+                <button
+                  onClick={() => {
+                    setNotifOpen((prev) => !prev);
+                    markNotificationsSeen();
+                  }}
+                  className="relative p-2 text-brand-creamDim hover:text-brand-cream transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell size={20} />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-brand-gold text-brand-base text-[10px] font-bold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+                      {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                    </span>
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <div
+                    className="absolute right-0 top-full mt-1 glass-card min-w-[250px] max-w-[300px] py-2 shadow-card animate-slideDown"
+                    onMouseEnter={openNotifMenu}
+                    onMouseLeave={closeNotifMenuWithDelay}
+                  >
+                    <p className="px-4 py-2 text-xs text-brand-creamDim border-b border-brand-cream/10">Latest updates</p>
+                    {notifications.length === 0 ? (
+                      <p className="px-4 py-3 text-xs text-brand-creamDim/70">No notifications yet.</p>
+                    ) : (
+                      notifications.slice(0, 5).map((item) => (
+                        <div key={item.id} className="px-4 py-2 border-b last:border-b-0 border-brand-cream/10">
+                          <p className="text-xs font-semibold text-brand-cream line-clamp-1">{item.title}</p>
+                          <p className="text-[11px] text-brand-creamDim leading-relaxed line-clamp-2">{item.message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* User */}
-              <div className="relative">
+              <div
+                className="relative"
+                onMouseEnter={openUserMenu}
+                onMouseLeave={closeUserMenuWithDelay}
+              >
                 {user ? (
                   <>
                     <button
                       onClick={() => setUserMenuOpen(o => !o)}
                       className="p-2 text-brand-creamDim hover:text-brand-cream transition-colors"
+                      aria-label="Open user menu"
                     >
                       <User size={20} />
                     </button>
                     {userMenuOpen && (
-                      <div className="absolute right-0 top-10 glass-card min-w-[160px] py-2 shadow-card animate-slideDown">
+                      <div
+                        className="absolute right-0 top-full mt-1 glass-card min-w-[160px] py-2 shadow-card animate-slideDown"
+                        onMouseEnter={openUserMenu}
+                        onMouseLeave={closeUserMenuWithDelay}
+                      >
                         <p className="px-4 py-2 text-xs text-brand-creamDim border-b border-brand-cream/10 truncate">
                           {user.email}
                         </p>
+                        <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-brand-cream hover:bg-brand-green/50 transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <User size={14} /> Profile
+                        </Link>
                         <Link href="/wishlist" className="flex items-center gap-2 px-4 py-2 text-sm text-brand-cream hover:bg-brand-green/50 transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <Heart size={14} /> Wishlist
                         </Link>
@@ -181,9 +302,14 @@ export default function Navbar() {
             ))}
             <div className="w-16 h-px bg-brand-gold/40 my-2" />
             {user ? (
-              <button onClick={() => { signOut(); setMobileOpen(false); }} className="text-brand-rose font-body text-sm flex items-center gap-2">
-                <LogOut size={16} /> Sign Out
-              </button>
+              <>
+                <Link href="/profile" onClick={() => setMobileOpen(false)} className="text-brand-cream font-body text-sm flex items-center gap-2">
+                  <User size={16} /> Profile
+                </Link>
+                <button onClick={() => { signOut(); setMobileOpen(false); }} className="text-brand-rose font-body text-sm flex items-center gap-2">
+                  <LogOut size={16} /> Sign Out
+                </button>
+              </>
             ) : (
               <Link href="/auth/login" onClick={() => setMobileOpen(false)} className="btn-outline text-sm">
                 Sign In

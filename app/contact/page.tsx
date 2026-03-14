@@ -16,6 +16,7 @@
 
 import { useState, FormEvent } from "react";
 import AnimateIn from "@/components/ui/AnimateIn";
+import { supabase } from "@/lib/supabase";
 import { Instagram, Facebook, MessageCircle, Mail, Phone, Send, Check } from "lucide-react";
 
 const SOCIALS = [
@@ -64,6 +65,7 @@ export default function ContactPage() {
   const [form,      setForm]      = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [loading,   setLoading]   = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const update = (f: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [f]: e.target.value }));
@@ -71,18 +73,34 @@ export default function ContactPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSubmitError(null);
 
-    /* ── TODO: Save to Supabase contact_messages table ──
-       await supabase.from("contact_messages").insert({ ...form });
-    ─────────────────────────────────────────────────── */
+    try {
+      const db = supabase as any;
+      const { error } = await db.from("contact_messages").insert({
+        name: form.name.trim(),
+        email: form.email.trim() || null,
+        phone: form.phone.trim() || null,
+        subject: form.subject.trim() || null,
+        message: form.message.trim(),
+      });
 
-    // Open WhatsApp as fallback
-    const msg = `Hi Amna!\n\n*From:* ${form.name}\n${form.subject ? `*Subject:* ${form.subject}\n` : ""}*Message:* ${form.message}`;
-    window.open(`https://wa.me/923159202186?text=${encodeURIComponent(msg)}`, "_blank");
+      if (error) {
+        throw new Error(error.message || "Unable to send message right now.");
+      }
 
-    await new Promise(r => setTimeout(r, 600));
-    setLoading(false);
-    setSubmitted(true);
+      // Open WhatsApp as fallback
+      const msg = `Hi Amna!\n\n*From:* ${form.name}\n${form.subject ? `*Subject:* ${form.subject}\n` : ""}*Message:* ${form.message}`;
+      window.open(`https://wa.me/923159202186?text=${encodeURIComponent(msg)}`, "_blank");
+
+      await new Promise(r => setTimeout(r, 600));
+      setSubmitted(true);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unable to send message right now.";
+      setSubmitError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -148,6 +166,11 @@ export default function ContactPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="glass-card p-7 space-y-5">
+                {submitError ? (
+                  <div className="rounded-xl border border-red-300/30 bg-red-100/30 px-3 py-2 text-xs text-red-700">
+                    {submitError}
+                  </div>
+                ) : null}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block font-body text-xs text-brand-creamDim/60 mb-1.5">Name *</label>

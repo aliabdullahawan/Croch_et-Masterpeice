@@ -10,7 +10,7 @@ import Link                from "next/link";
 import { useParams }        from "next/navigation";
 import {
   ShoppingBag, Heart, MessageCircle, Star, ArrowLeft,
-  Sparkles, Check, Send, User, ShoppingCart, Zap,
+  Sparkles, Check, Send, ShoppingCart, Zap,
 } from "lucide-react";
 import { useCart }         from "@/context/CartContext";
 import { useWishlist }     from "@/context/WishlistContext";
@@ -20,6 +20,7 @@ import { fetchProductBySlug, fetchProducts, fetchApprovedReviews, submitReview }
 import type { Product, Review } from "@/lib/types";
 import ProductCard         from "@/components/ProductCard";
 import { useEffect } from "react";
+import { getAvatarGradient, getInitials } from "@/lib/utils";
 
 interface LocalReview {
   id: string; name: string; rating: number; body: string; date: string;
@@ -460,10 +461,10 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 allReviews.map(r => (
-                  <div key={r.id} className="p-4 sm:p-5 rounded-2xl transition-all duration-300 hover:-translate-y-0.5" style={{ ...cardStyle, boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.3)" : "0 4px 20px rgba(61,43,31,0.06)" }}>
+                  <div key={r.id} className="p-4 sm:p-5 rounded-2xl transition-all duration-300 hover:-translate-y-1" style={{ ...cardStyle, boxShadow: isDark ? "0 8px 28px rgba(0,0,0,0.34)" : "0 10px 26px rgba(61,43,31,0.1)" }}>
                     <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #F0C4C8, #E8A0A8)", color: "#fff" }}>
-                        <User size={16} />
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold" style={{ background: getAvatarGradient(r.name), color: "#fff" }}>
+                        {getInitials(r.name)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1 gap-2">

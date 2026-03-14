@@ -4,9 +4,9 @@
    • Crochet-relevant copy (no globe boilerplate text)
    • Globe showing global customer map
    • 4 animated metric cards (stagger entrance)
-   • Recent Orders table (no quick-action buttons)
-   • WhatsApp custom orders snapshot card
-   TODO: Replace mock data with Supabase queries
+  • Recent Orders table (no quick-action buttons)
+  • WhatsApp custom orders snapshot card
+  Data is loaded from Supabase via db-client.
 ════════════════════════════════════════════════════════════════ */
 "use client";
 
